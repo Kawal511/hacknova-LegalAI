@@ -1,0 +1,39 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NyayaZephyr | Premium AI Legal Research</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Montserrat', sans-serif;
+      }
+      .font-serif {
+        font-family: 'Playfair Display', serif;
+      }
+      /* Tetris-like floating animations */
+      @keyframes float-tetris {
+        0% { transform: translate(0, 0) rotate(0deg); opacity: 0.03; }
+        50% { transform: translate(20px, -40px) rotate(90deg); opacity: 0.06; }
+        100% { transform: translate(0, 0) rotate(0deg); opacity: 0.03; }
+      }
+      .tetris-block {
+        position: absolute;
+        background: #AC9362;
+        pointer-events: none;
+        animation: float-tetris 20s infinite ease-in-out;
+      }
+      /* Scrollbar */
+      ::-webkit-scrollbar { width: 8px; }
+      ::-webkit-scrollbar-track { background: #f5f1e8; }
+      ::-webkit-scrollbar-thumb { background: #d4b896; border-radius: 4px; }
+      ::-webkit-scrollbar-thumb:hover { background: #8b7355; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
