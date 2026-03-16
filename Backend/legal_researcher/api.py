@@ -1,3 +1,8 @@
+import os
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+
 """
 This module defines the FastAPI routes for the Legal AI Platform, handling authentication (JWT), case management, AI chat, and document processing endpoints. It serves as the primary interface for the frontend.
 """
@@ -28,7 +33,6 @@ Usage:
 """
 
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Form, Request, Query
-from reranker import get_reranker
 
 
 from fastapi.responses import FileResponse
@@ -644,6 +648,7 @@ async def search_kanoon(request: SearchKanoonRequest):
              info = researcher.extract_case_info(md, url)
              dict_results.append(info)
              
+        from reranker import get_reranker
         reranker = get_reranker()
         ranked_dicts = reranker.rank_results(request.query, dict_results, top_k=3)
         
@@ -993,6 +998,7 @@ async def conduct_legal_research(request: ResearchRequest):
             case_info["ai_summary"] = researcher.summarize_case(md, case_info['case_title'])
             dict_results.append(case_info)
             
+        from reranker import get_reranker
         reranker = get_reranker()
         ranked_dicts = reranker.rank_results(request.description, dict_results)
         

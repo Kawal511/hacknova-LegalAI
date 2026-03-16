@@ -17,7 +17,12 @@ This architecture ensures:
 4. GDPR-compliant data deletion (delete entire file)
 """
 
-import sqlite3
+import os
+if os.getenv("TURSO_DATABASE_URL"):
+    import libsql_experimental as sqlite3
+else:
+    import sqlite3
+
 import os
 import logging
 import bcrypt
