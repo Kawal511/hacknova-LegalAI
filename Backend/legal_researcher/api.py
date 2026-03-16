@@ -221,6 +221,7 @@ class ChatRequest(BaseModel):
     case_id: int
     query: str = Field(..., min_length=1)
     language: str = Field(default="en", description="Language code for translation (e.g., 'es', 'hi', 'fr')")
+    use_neural: bool = Field(default=False, description="Whether to use HuggingFace APIs for neural translation")
 
 class ChatResponse(BaseModel):
     response: str
@@ -827,7 +828,7 @@ async def chat_with_case(request: ChatRequest, user_id: int = Query(..., descrip
                                                
     query_in_english = request.query
     if request.language != 'en':
-        query_in_english = translate_to_english(request.query, source_lang=request.language)
+        query_in_english = translate_to_english(request.query, source_lang=request.language, use_neural=request.use_neural)
     
                                             
                                                            
@@ -850,7 +851,7 @@ async def chat_with_case(request: ChatRequest, user_id: int = Query(..., descrip
                                                           
     final_response = response
     if request.language != 'en':
-        final_response = translate_from_english(response, target_lang=request.language)
+        final_response = translate_from_english(response, target_lang=request.language, use_neural=request.use_neural)
     
     return ChatResponse(response=final_response, case_id=request.case_id, language=request.language)
 

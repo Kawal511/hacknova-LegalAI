@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLanguage } from './LanguageContext';
 
 interface Client {
     id: number;
@@ -54,6 +55,10 @@ export default function ClientsPage() {
         { role: "ai", content: "Hello! Select a case or ask me anything about this client." }
     ]);
     const [chatLoading, setChatLoading] = useState(false);
+    
+    // Translation options
+    const { language } = useLanguage();
+    const [useNeuralTranslation, setUseNeuralTranslation] = useState(true);
 
     useEffect(() => {
         fetchClients();
@@ -174,7 +179,12 @@ export default function ClientsPage() {
             const res = await fetch("http://localhost:8000/legal/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ case_id: recentCase.id, query: userMsg, language: "en" })
+                body: JSON.stringify({ 
+                    case_id: recentCase.id, 
+                    query: userMsg, 
+                    language: language,
+                    use_neural: useNeuralTranslation 
+                })
             });
             const data = await res.json();
             if (res.ok) {
@@ -478,6 +488,17 @@ export default function ClientsPage() {
                                 )}
                             </div>
                             <div className="p-3 border-t border-gray-200 bg-white">
+                                <div className="flex justify-between items-center mb-2 px-1">
+                                    <label className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={useNeuralTranslation} 
+                                            onChange={e => setUseNeuralTranslation(e.target.checked)}
+                                            className="rounded text-[#f97316] focus:ring-[#f97316]"
+                                        />
+                                        Use Neural Translation (HuggingFace)
+                                    </label>
+                                </div>
                                 <div className="flex gap-2">
                                     <input
                                         type="text"

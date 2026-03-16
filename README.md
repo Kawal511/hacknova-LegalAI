@@ -94,6 +94,7 @@ Unlike standard LegalWrappers, NyayaZephyr implements a **defense-in-depth secur
 The platform follows a **Secure Monorepo** structure with a decoupled React frontend and a FastAPI backend.
 
 ```mermaid
+
 graph TD
     User[Legal Professional] -->|HTTPS/TLS| FE[React Frontend]
     FE -->|JWT Auth Bearer| API[FastAPI Backend]
@@ -116,6 +117,7 @@ graph TD
         Chat <-->|Inference| Groq["Groq LPU (Llama 3)"]
         Gen <-->|Research| Firecrawl[Firecrawl Search]
     end
+    
 ```
 
 ---

@@ -15,3 +15,10 @@ langchain-community
 langchain
 fpdf2==2.8.2
 deep-translator==1.11.4
+transformers
+datasets
+evaluate
+sacrebleu
+sentencepiece
+torch
+torchtext
