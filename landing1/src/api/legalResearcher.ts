@@ -701,7 +701,7 @@ export async function getECourtsStatistics(): Promise<ECourtsStats> {
 
   try {
     const response = await fetch(`${API_BASE}/ecourts/statistics`, {
-      signal: AbortSignal.timeout(10000), // 10s timeout
+      signal: AbortSignal.timeout(2000), // 2s timeout for instant load feeling
     });
     if (!response.ok) {
       throw new Error("Failed to fetch eCourts statistics");

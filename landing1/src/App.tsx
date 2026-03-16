@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -642,7 +642,22 @@ function DocumentsPage({ onNavigate }: { onNavigate: (page: "dashboard" | "docum
         console.log("Loaded case data:", caseData);
 
         setSessionId(String(caseId));
-        setMetadata(caseData.structured_data || {});
+        // Map case fields to the metadata format expected by the Document Analysis panel
+        const sd = caseData.structured_data || {};
+        setMetadata({
+          case_title: caseData.client_name + (sd.opposing_party ? ` vs ${sd.opposing_party}` : ""),
+          case_number: `CASE-${caseId}`,
+          doc_type: sd.case_type || caseData.case_type || "Legal Case",
+          court: sd.court || "General Court",
+          judge: sd.judge || "Not specified",
+          appellant: caseData.client_name || sd.appellant || "Not specified",
+          respondent: sd.opposing_party || sd.respondent || "Not specified",
+          detailed_summary: sd.legal_issue_summary || caseData.legal_issue_summary || "Case loaded. You can now ask questions about this case.",
+          verdict: caseData.stage || sd.verdict || "In Progress",
+          victim: sd.victim || null,
+          facts: sd.facts || null,
+          reasoning: sd.reasoning || null,
+        });
         setFileUrl(null); // No file preview for case-based documents
 
         // Fetch chat history

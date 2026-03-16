@@ -158,7 +158,8 @@ export async function getCaseEvidence(
     userId: number
 ): Promise<CaseEvidenceResponse> {
     const response = await fetch(
-        `${API_BASE}/legal/evidence/${caseId}?user_id=${userId}`
+        `${API_BASE}/legal/evidence/${caseId}?user_id=${userId}`,
+        { signal: AbortSignal.timeout(15000) }
     );
 
     if (!response.ok) {

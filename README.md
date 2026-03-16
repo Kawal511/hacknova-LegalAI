@@ -49,6 +49,8 @@ Unlike standard LegalWrappers, NyayaZephyr implements a **defense-in-depth secur
 - 📁 **Case Management**: Create, track, and manage legal cases with progress tracking
 - 🤖 **AI-Powered Chat**: Context-aware conversations with your case documents
 - 🔍 **Legal Research**: Automated research using Firecrawl and Groq LLMs
+- 🔬 **AI Evidence Analyzer**: Automated image and video analysis using Gemini Vision
+- ⏳ **Interactive Timeline**: Visual evidence chronology with AI-extracted key moments
 - 🔒 **Enterprise Security**: JWT auth, multi-tenant isolation, audit logging
 - 🌍 **Multilingual**: Support for 10+ languages including Hindi, Spanish, French
 - 📊 **Admin Dashboard**: Real-time security monitoring and compliance tracking
@@ -74,6 +76,8 @@ Unlike standard LegalWrappers, NyayaZephyr implements a **defense-in-depth secur
 
 ### AI & Data Engineering
 *   **LLM Inference**: Groq LPU (Llama-3-70b-Versatile)
+*   **Vision API**: Google Gemini-1.5-Flash (via Google Generative AI SDK)
+*   **Image Processing**: OpenCV, Pillow (PIL)
 *   **Web Search**: Firecrawl SDK (Custom Legal Scraper)
 *   **PDF Processing**: PyPDF2, pdfplumber
 *   **Guards**: Custom Regex Guardrails, Output Validators
@@ -255,6 +259,25 @@ graph LR
 
 ---
 
+## 🔬 AI Evidence Analyzer & Timeline
+
+A specialized module for analyzing visual evidence (images and videos) using **Google Gemini Vision**.
+
+### Visual Evidence Workflow
+1.  **Media Upload**: Supports high-res images (up to 10MB) and videos (up to 100MB).
+2.  **AI Vision Analysis**:
+    *   **Object Detection**: Identifies relevant items (weapons, documents, vehicle damage).
+    *   **Scene Understanding**: Generates detailed forensic descriptions.
+    *   **Text Extraction (OCR)**: Extracts text from signs, labels, and documents within images.
+    *   **Safety Audit**: Automatic NSFW/violence detection with optional blurring.
+3.  **Video Chronology**:
+    *   Samples frames at configurable intervals.
+    *   Analyzes each frame to detect "Key Moments".
+    *   Generates an **Interactive Evidence Timeline** for rapid review of long footage.
+4.  **Annotated Visuals**: Generates high-contrast bounding boxes on detected objects for court presentation.
+
+---
+
 ## 🔍 Legal Researcher Architecture
 
 A dedicated module for autonomous web-based legal research using **Firecrawl**.
@@ -323,12 +346,15 @@ cd Backend/legal_researcher
 python -m venv venv
 source venv/bin/activate
 
-# Install deps
+# Install core deps
 pip install -r requirements.txt
+
+# Install Evidence Analyzer deps (OpenCV, Gemini)
+pip install -r requirements_evidence.txt
 
 # Environment Setup
 cp .env.example .env
-# Edit .env with your keys
+# Edit .env and add your GROQ_API_KEY, FIRECRAWL_API_KEY, and GEMINI_API_KEY
 ```
 
 ### Frontend Setup

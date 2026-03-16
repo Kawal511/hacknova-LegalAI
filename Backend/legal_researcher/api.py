@@ -1283,6 +1283,14 @@ def create_standalone_app() -> FastAPI:
         print("✅ Drafting assistant endpoints loaded")
     except Exception as e:
         print(f"⚠️ Could not load drafting endpoints: {e}")
+
+    # Include evidence timeline router
+    try:
+        from api_timeline import router as timeline_router
+        app.include_router(timeline_router)
+        print("✅ Evidence timeline endpoints loaded")
+    except Exception as e:
+        print(f"⚠️ Could not load timeline endpoints: {e}")
     
     @app.get("/")
     async def root():

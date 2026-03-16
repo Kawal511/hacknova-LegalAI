@@ -1,9 +1,3 @@
-/**
- * EvidencePanel Component
- * Displays and manages visual evidence for a case
- * Includes upload, gallery view, analysis display, and NSFW blur
- */
-
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -18,6 +12,7 @@ import {
     type EvidenceItem,
     type EvidenceAnalysis,
 } from "./api/evidenceApi";
+import EvidenceTimeline from "./EvidenceTimeline";
 
 interface EvidencePanelProps {
     caseId: number;
@@ -40,6 +35,7 @@ export default function EvidencePanel({
     const [selectedEvidence, setSelectedEvidence] = useState<EvidenceItem | null>(null);
     const [showUploadModal, setShowUploadModal] = useState(false);
     const [revealedNsfw, setRevealedNsfw] = useState<Set<number>>(new Set());
+    const [activeTab, setActiveTab] = useState<"gallery" | "timeline">("gallery");
 
     // Load evidence on mount
     const loadEvidence = useCallback(async () => {
@@ -135,15 +131,17 @@ export default function EvidencePanel({
                     <span className="text-sm font-normal text-[#666]">({evidence.length} items)</span>
                 </h3>
                 <div className="flex gap-2">
-                    <button
-                        onClick={() => setShowUploadModal(true)}
-                        className="px-4 py-2 bg-[#f97316] text-white rounded-lg text-sm font-medium hover:bg-[#ea580c] transition-colors flex items-center gap-2"
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
-                        Add Evidence
-                    </button>
+                    {activeTab === "gallery" && (
+                        <button
+                            onClick={() => setShowUploadModal(true)}
+                            className="px-4 py-2 bg-[#f97316] text-white rounded-lg text-sm font-medium hover:bg-[#ea580c] transition-colors flex items-center gap-2"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                            Add Evidence
+                        </button>
+                    )}
                     {onClose && (
                         <button
                             onClick={onClose}
@@ -157,6 +155,30 @@ export default function EvidencePanel({
                 </div>
             </div>
 
+            {/* Tab pills */}
+            <div className="flex gap-2 mb-4 px-1">
+                <button
+                    onClick={() => setActiveTab("gallery")}
+                    className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                        activeTab === "gallery"
+                            ? "bg-[#f97316] text-white"
+                            : "bg-transparent text-[#666] border border-[#d4b896] hover:bg-[#e5ddd0]"
+                    }`}
+                >
+                    Gallery
+                </button>
+                <button
+                    onClick={() => setActiveTab("timeline")}
+                    className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                        activeTab === "timeline"
+                            ? "bg-[#f97316] text-white"
+                            : "bg-transparent text-[#666] border border-[#d4b896] hover:bg-[#e5ddd0]"
+                    }`}
+                >
+                    Timeline
+                </button>
+            </div>
+
             {/* Error */}
             {error && (
                 <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-lg text-red-700 text-sm">
@@ -167,7 +189,9 @@ export default function EvidencePanel({
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto">
-                {loading ? (
+                {activeTab === "timeline" ? (
+                    <EvidenceTimeline caseId={caseId} userId={userId} />
+                ) : loading ? (
                     <div className="flex items-center justify-center h-48">
                         <svg className="w-8 h-8 animate-spin text-[#f97316]" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />

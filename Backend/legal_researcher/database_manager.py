@@ -219,6 +219,25 @@ class DatabaseRouter:
         """)
         
         conn.commit()
+
+        # Add timeline columns to documents table if not present
+        try:
+            cursor.execute("ALTER TABLE documents ADD COLUMN annotation TEXT DEFAULT ''")
+        except Exception:
+            pass  # Column already exists
+        try:
+            cursor.execute("ALTER TABLE documents ADD COLUMN event_date TIMESTAMP")
+        except Exception:
+            pass
+        try:
+            cursor.execute("ALTER TABLE documents ADD COLUMN evidence_type TEXT DEFAULT 'document'")
+        except Exception:
+            pass
+        try:
+            cursor.execute("ALTER TABLE documents ADD COLUMN event_title TEXT")
+        except Exception:
+            pass
+        conn.commit()
     
                                                                                   
     
@@ -606,6 +625,52 @@ class DatabaseRouter:
                 cursor = conn.execute("SELECT COUNT(*) as cnt FROM evidence")
             row = cursor.fetchone()
             return row['cnt'] if row else 0
+
+    # ============== TIMELINE EVENTS ==============
+
+    def get_timeline_events(self, user_id: int, case_id: int) -> List:
+        """Get all timeline events for a case, sorted by event_date ASC."""
+        with self.get_tenant_conn(user_id) as conn:
+            cursor = conn.execute("""
+                SELECT doc_id, case_id, filename, parsed_text, uploaded_at,
+                       annotation, event_date, evidence_type, event_title
+                FROM documents
+                WHERE case_id = ?
+                ORDER BY COALESCE(event_date, uploaded_at) ASC
+            """, (case_id,))
+            return [dict(row) for row in cursor.fetchall()]
+
+    def get_timeline_event_by_id(self, user_id: int, doc_id: int):
+        """Get a single timeline event by doc_id."""
+        with self.get_tenant_conn(user_id) as conn:
+            cursor = conn.execute("""
+                SELECT doc_id, case_id, filename, parsed_text, uploaded_at,
+                       annotation, event_date, evidence_type, event_title
+                FROM documents
+                WHERE doc_id = ?
+            """, (doc_id,))
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
+    def update_event_annotation(self, user_id: int, doc_id: int, annotation: str) -> bool:
+        """Update annotation on a document/event."""
+        with self.get_tenant_conn(user_id) as conn:
+            cursor = conn.execute(
+                "UPDATE documents SET annotation = ? WHERE doc_id = ?",
+                (annotation, doc_id)
+            )
+            return cursor.rowcount > 0
+
+    def create_timeline_event(self, user_id: int, case_id: int, title: str,
+                               description: str, event_date: str,
+                               evidence_type: str, source_file: str) -> int:
+        """Create a new manual timeline event in the documents table."""
+        with self.get_tenant_conn(user_id) as conn:
+            cursor = conn.execute("""
+                INSERT INTO documents (case_id, filename, parsed_text, event_date, evidence_type, event_title, annotation)
+                VALUES (?, ?, ?, ?, ?, ?, '')
+            """, (case_id, source_file, description, event_date, evidence_type, title))
+            return cursor.lastrowid
 
 
                                                     
