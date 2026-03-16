@@ -282,7 +282,25 @@ A specialized module for analyzing visual evidence (images and videos) using **G
 
 ## 🔍 Legal Researcher Architecture
 
-A dedicated module for autonomous web-based legal research using **Firecrawl**.
+A dedicated module for autonomous web-based legal research using **Firecrawl** and **Sentence-BERT**.
+
+```mermaid
+graph TD
+    subgraph "Legal Research Pipeline"
+        Q[User Query] -->|1. Generate Search Terms| LLM1[Groq LPU]
+        LLM1 -->|2. Search & Scrape| FC[Firecrawl SDK]
+        FC -->|Raw Markdown| Ext[Info Extractor]
+        Ext -->|JSON Cases| RR[Sentence-BERT Re-Ranker]
+        
+        subgraph "Local Re-Ranking Engine"
+            RR -->|all-MiniLM-L6-v2| Embed[Vector Embeddings]
+            Embed -->|NumPy Cosine Sim| Rank[Relevance Score]
+            Rank -->|Boost Supreme Court| FinalSort[Sorted Results]
+        end
+        
+        FinalSort -->|3. Response| API[FastAPI Endpoint]
+    end
+```
 
 ### Workflow
 1.  **Query Generation**: LLM analyzes basic case facts to generate 3-5 specific search queries (e.g., "Supreme Court Property dispute brother sister").
@@ -290,10 +308,18 @@ A dedicated module for autonomous web-based legal research using **Firecrawl**.
     *   Searches trusted legal repositories (e.g., Indian Kanoon).
     *   Respects `robots.txt` and implements rate limiting (6s delay).
     *   Extracts page content as markdown.
-3.  **Re-Ranking & Filtering**:
-    *   LLM reviews scraped content to filter out irrelevant cases.
-    *   Extracts `Verdict`, `Court`, `Year`, and generates a 2-sentence summary.
+3.  **Local Re-Ranking Engine**:
+    *   A local `SentenceTransformer` (`all-MiniLM-L6-v2`) converts documents and queries to vector space.
+    *   Computes relevance locally via `NumPy` dot-product cosine similarity.
+    *   Boosts specific geographic and hierarchical jurisdictions (e.g., `+0.2` score for Supreme Court/India matches) to heavily favor decisive case law.
 4.  **Storage**: Results are stored in a structured JSON database (per client) for later retrieval.
+
+### OS Compatibility Note (macOS / Apple Silicon)
+> **Warning:** Apple's `Accelerate` multiprocessing backend contains known bugs with Rust-based Tokenizers and multiprocessing in Python, leading to `[mutex.cc : 452] RAW: Lock blocking` freezes.
+> To run the backend safely on macOS, set the following environment variables:
+> `export TOKENIZERS_PARALLELISM=false`
+> `export OMP_NUM_THREADS=1`
+> *(See `macos.md` for a comprehensive breakdown and Windows/Linux instructions).*
 
 ---
 

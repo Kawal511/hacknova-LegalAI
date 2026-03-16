@@ -28,6 +28,9 @@ Usage:
 """
 
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Form, Request, Query
+from reranker import get_reranker
+
+
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -248,6 +251,7 @@ class CaseInfo(BaseModel):
     parties: Dict[str, str]
     summary: str
     ai_summary: Optional[str] = None
+    relevance_score: Optional[float] = None
 
 class ResearchResponse(BaseModel):
     success: bool
@@ -634,15 +638,23 @@ async def search_kanoon(request: SearchKanoonRequest):
         # 2. Fetch details (limit to 3 for speed)
         raw_cases = researcher.get_case_details(urls[:3])
         
-        results = []
+        dict_results = []
         for url, doc in raw_cases:
              md = doc.markdown if hasattr(doc, 'markdown') else ''
              info = researcher.extract_case_info(md, url)
+             dict_results.append(info)
+             
+        reranker = get_reranker()
+        ranked_dicts = reranker.rank_results(request.query, dict_results, top_k=3)
+        
+        results = []
+        for info in ranked_dicts:
              results.append({
-                 "url": url, 
+                 "url": info.get("url", ""), 
                  "title": info.get("case_title", "Unknown Case"),
                  "date": info.get("date", ""),
-                 "court": info.get("court", "")
+                 "court": info.get("court", ""),
+                 "relevance_score": info.get("relevance_score", 0.0)
              })
              
         return {"results": results}
@@ -974,14 +986,18 @@ async def conduct_legal_research(request: ResearchRequest):
         raw_cases = researcher.get_case_details(urls)
         
                                                         
-        formatted_results = []
+        dict_results = []
         for url, doc in raw_cases:
             md = doc.markdown if hasattr(doc, 'markdown') else ''
             case_info = researcher.extract_case_info(md, url)
-            
-                                 
             case_info["ai_summary"] = researcher.summarize_case(md, case_info['case_title'])
+            dict_results.append(case_info)
             
+        reranker = get_reranker()
+        ranked_dicts = reranker.rank_results(request.description, dict_results)
+        
+        formatted_results = []
+        for case_info in ranked_dicts:
             formatted_results.append(CaseInfo(
                 url=case_info['url'],
                 case_title=case_info['case_title'],
@@ -991,7 +1007,8 @@ async def conduct_legal_research(request: ResearchRequest):
                 verdict=case_info['verdict'],
                 parties=case_info['parties'],
                 summary=case_info['summary'],
-                ai_summary=case_info.get('ai_summary')
+                ai_summary=case_info.get('ai_summary'),
+                relevance_score=case_info.get('relevance_score')
             ))
         
                                                 
