@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: legal-researcher-api
+    env: python
+    rootDir: Backend/legal_researcher
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn api:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: TURSO_DATABASE_URL
+        sync: false
+      - key: TURSO_AUTH_TOKEN
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: FIRECRAWL_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+    autoDeploy: true

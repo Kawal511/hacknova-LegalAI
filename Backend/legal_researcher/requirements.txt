@@ -22,3 +22,5 @@ sacrebleu
 sentencepiece
 torch
 torchtext
+libsql-experimental==0.0.55
+libsql-client
