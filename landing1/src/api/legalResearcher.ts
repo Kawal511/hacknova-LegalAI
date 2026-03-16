@@ -4,7 +4,7 @@
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000/legal";
 
 // Safe fetch wrapper to prevent crashes
-async function safeFetch(url: string, options?: RequestInit): Promise<Response> {
+export async function safeFetch(url: string, options?: RequestInit): Promise<Response> {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
