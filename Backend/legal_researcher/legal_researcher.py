@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+import os
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 """
 This module manages autonomous legal research. It utilizes the Firecrawl API to search authoritative legal sources, scrape relevant case law, and generate summaries for the user.
 """
@@ -83,7 +86,7 @@ class LegalResearcher:
                                                   
         self.llm = ChatGroq(
             api_key=groq_key,
-            model_name="llama-3.1-8b-instant",                                   
+            model_name="llama-3.3-70b-versatile",
             temperature=0.3,
             max_tokens=300
         )

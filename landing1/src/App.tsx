@@ -10,6 +10,7 @@ import { LanguageProvider, useLanguage } from "./LanguageContext";
 import { LanguageSelector } from "./LanguageSelector";
 import { getUserCases, type CaseDetails } from "./api/legalResearcher";
 import { useTheme, getThemeColors } from "./ThemeContext";
+import { UserButton } from "@clerk/clerk-react";
 
 interface Block {
   id: number;
@@ -505,14 +506,9 @@ function TopNavbar({ activePage, onNavigate }: { activePage: "dashboard" | "docu
             </div>
 
             {/* User Profile */}
-            <div className="hidden md:flex items-center gap-2 pl-3 border-l border-[#d4cdb8]">
-              <div className="w-8 h-8 bg-[#d4c4a8] rounded-full flex items-center justify-center text-[#1a1a1a] font-bold text-sm">L1</div>
-              <div className="hidden lg:block">
-                <p className="text-[12px] font-bold text-[#1a1a1a]" style={{ fontFamily: "Montserrat, sans-serif" }}>Lawyer1</p>
-              </div>
-            </div>
+              <div className="hidden md:flex items-center gap-2 pl-3 border-l border-[#d4cdb8]"><UserButton afterSignOutUrl="/" /></div>
 
-            {/* Mobile menu button */}
+              {/* Mobile menu button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="md:hidden p-2 rounded-lg hover:bg-[#e5ddd0] transition-colors"
@@ -553,12 +549,7 @@ function TopNavbar({ activePage, onNavigate }: { activePage: "dashboard" | "docu
               ))}
             </div>
             <div className="mt-3 pt-3 border-t border-[#d4cdb8] flex items-center justify-between">
-              <LanguageSelector />
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-[#d4c4a8] rounded-full flex items-center justify-center text-[#1a1a1a] font-bold text-sm">L1</div>
-                <p className="text-[12px] font-bold text-[#1a1a1a]" style={{ fontFamily: "Montserrat, sans-serif" }}>Lawyer1</p>
-              </div>
-            </div>
+              <LanguageSelector />`n                <div className="flex items-center gap-2">`n                  <UserButton afterSignOutUrl="/" />`n                </div>`n              </div>
           </div>
         )}
       </div>
@@ -652,7 +643,7 @@ function DocumentsPage({ onNavigate }: { onNavigate: (page: "dashboard" | "docum
           judge: sd.judge || "Not specified",
           appellant: caseData.client_name || sd.appellant || "Not specified",
           respondent: sd.opposing_party || sd.respondent || "Not specified",
-          detailed_summary: sd.legal_issue_summary || caseData.legal_issue_summary || "Case loaded. You can now ask questions about this case.",
+          detailed_summary: sd.detailed_summary || sd.legal_issue_summary || caseData.legal_issue_summary || "Case loaded. You can now ask questions about this case.",
           verdict: caseData.stage || sd.verdict || "In Progress",
           victim: sd.victim || null,
           facts: sd.facts || null,
@@ -735,7 +726,7 @@ function DocumentsPage({ onNavigate }: { onNavigate: (page: "dashboard" | "docum
         judge: data.structured_data?.judge || "Not specified",
         appellant: data.client_name || "Not specified",
         respondent: data.structured_data?.opposing_party || "Not specified",
-        detailed_summary: data.structured_data?.legal_issue_summary || "Document analyzed successfully. You can now ask questions about this case.",
+        detailed_summary: data.structured_data?.detailed_summary || data.structured_data?.legal_issue_summary || "Document analyzed successfully. You can now ask questions about this case.",
         verdict: data.stage || "In Progress",
         victim: data.structured_data?.victim || null
       });
@@ -748,7 +739,7 @@ function DocumentsPage({ onNavigate }: { onNavigate: (page: "dashboard" | "docum
 
     } catch (error) {
       console.error("Upload error:", error);
-      alert("Failed to analyze document. Please ensure the backend is running and try again.");
+      alert(error instanceof Error ? error.message : "Failed to analyze document. Please ensure the backend is running and try again.");
       // Keep the file visible even simply for preview
       // setFileUrl(null); 
     } finally {
@@ -2767,6 +2758,8 @@ export default function App() {
     </LanguageProvider>
   );
 }
+
+
 
 
 

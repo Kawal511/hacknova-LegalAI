@@ -638,5 +638,60 @@
                 "ai_summary": "Here's a 2-3 sentence summary of the case:\n\nThe dispute was about the petitioner, Sri Basavaraj Shivappa Muttagi, seeking to quash an order dated 06.09.2019, passed by the State of Karnataka, allowing the Central Bureau of Investigation (CBI) to conduct further investigation into a crime registered in 2016. The court ultimately decided to quash the order dated 06.09.2019, passed by the State of Karnataka, allowing the CBI to conduct further investigation, but the details of the court's decision are not explicitly stated in the provided information."
             }
         ]
+    },
+    {
+        "search_id": "search_1773730179",
+        "timestamp": "2026-03-17T12:19:39.091287",
+        "client_input": {
+            "title": "john bataista vs Pappu Gang",
+            "description": "Murderer of three humans"
+        },
+        "citations_found": [
+            {
+                "url": "https://indiankanoon.org/doc/196000188/",
+                "case_title": "Unknown",
+                "court": "Supreme Court of India",
+                "date": "28 August, 2024",
+                "case_type": "Criminal",
+                "verdict": "Not determined",
+                "parties": {
+                    "petitioner": "## \\-",
+                    "respondent": "-"
+                },
+                "summary": "Legal Document View [**Unlock Advanced Research with PRISMAI**\\\\ \\\\ Integrated with over 4 crore judgments and laws — designed for legal practitioners, researchers, students and institutions\\\\ \\\\ \\- Know your Kanoon\\\\ \\- Doc Gen Hub\\\\ \\- Counter Argument\\\\ \\- Case Predict AI\\\\ \\- Talk with IK Doc\\\\ \\- ...\\\\ \\\\ Upgrade to Premium] \\ , Cited by \\] Orissa High Court \\- vs - on 28 August, 2024 Author: Bench: ``` IN THE HIGH COURT OF ORISSA, CUTTACK DSREF No.01 of 2023 From judgment and order dated 0...",
+                "ai_summary": "The dispute in this Indian legal case revolves around the confirmation of a death sentence imposed on Nabin Dehury, who was found guilty in a trial court, with the case being appealed by both Nabin Dehury and his son Hemananda Dehury. The Orissa High Court heard the appeals and the reference for confirmation of the death sentence. The court ultimately decided to uphold the conviction and death sentence imposed on Nabin Dehury, although the exact details of the decision are not provided in the given text.",
+                "relevance_score": 0.2
+            },
+            {
+                "url": "https://indiankanoon.org/doc/11344312/",
+                "case_title": "Unknown",
+                "court": "Supreme Court of India",
+                "date": "31 January, 2012",
+                "case_type": "Unknown",
+                "verdict": "Not determined",
+                "parties": {
+                    "petitioner": "## Cbi",
+                    "respondent": ". Kapil Kumar S/O Sh B L Kaul, R/O"
+                },
+                "summary": "Legal Document View [**Unlock Advanced Research with PRISMAI**\\\\ \\\\ Integrated with over 4 crore judgments and laws — designed for legal practitioners, researchers, students and institutions\\\\ \\\\ \\- Know your Kanoon\\\\ \\- Doc Gen Hub\\\\ \\- Counter Argument\\\\ \\- Case Predict AI\\\\ \\- Talk with IK Doc\\\\ \\- ...\\\\ \\\\ Upgrade to Premium] \\ , Cited by \\] Delhi District Court Cbi vs . Kapil Kumar S/O Sh B L Kaul, R/O on 31 January, 2012 ``` 1 IN THE COURT OF V .K .MAHESHWARI SPECIAL JUDGE: ­03 CBI DELHI C...",
+                "ai_summary": "The dispute in this Indian legal case was about a bribery allegation against Kapil Kumar, an Assistant Sanitary Inspector, who was accused of demanding an illegal gratification of Rs.2800 from Smt Kamlesh for regularization of her service as a substitute Safai Karamchari. The court decided the case in favor of the prosecution, as the evidence, including recorded conversations and a trap operation, supported the allegation of bribery against Kapil Kumar. The court's judgment was delivered on January 27, 2012, under Sections 7 and 13(2) read with 13(1)(d) of the Prevention of Corruption Act, 1988.",
+                "relevance_score": 0.2
+            },
+            {
+                "url": "https://indiankanoon.org/doc/149102051/",
+                "case_title": "Unknown",
+                "court": "Supreme Court of India",
+                "date": "18 January, 2021",
+                "case_type": "Criminal",
+                "verdict": "Disposed",
+                "parties": {
+                    "petitioner": "## Nilesh Navalakha",
+                    "respondent": "Union Of India Thru The Secretary/ Joint ..."
+                },
+                "summary": "Legal Document View [**Unlock Advanced Research with PRISMAI**\\\\ \\\\ Integrated with over 4 crore judgments and laws — designed for legal practitioners, researchers, students and institutions\\\\ \\\\ \\- Know your Kanoon\\\\ \\- Doc Gen Hub\\\\ \\- Counter Argument\\\\ \\- Case Predict AI\\\\ \\- Talk with IK Doc\\\\ \\- ...\\\\ \\\\ Upgrade to Premium] \\ , Cited by \\] Bombay High Court Nilesh Navalakha vs Union Of India Thru The Secretary/ Joint ... on 18 January, 2021 Equivalent citations: AIRONLINE 2021 BOM 14 Autho...",
+                "ai_summary": "The dispute in this case, Nilesh Navalakha vs Union Of India, revolved around a public interest litigation filed by the petitioners, who were social activists, against the Union of India and other respondents, including the Press Council of India and News Broadcasters Association. The Bombay High Court decided on the matter, although the specific details of the court's decision are not provided in the given text. The case was heard by Justice G.S. Kulkarni, who delivered the judgment on January 18, 2021.",
+                "relevance_score": 0.2
+            }
+        ]
     }
 ]

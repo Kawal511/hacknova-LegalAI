@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+import os
+load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'))
 """
 IndiaCode Scraper
 =================
@@ -96,7 +99,7 @@ class IndiaCodeScraper:
                 # Construct search URL
                 search_url = f"{self.BASE_URL}/search?query={query.replace(' ', '+')}"
                 
-                result = app.scrape_url(
+                result = app.scrape(
                     search_url,
                     params={
                         'formats': ['extract'],
@@ -190,7 +193,7 @@ class IndiaCodeScraper:
                 
                 app = FirecrawlApp(api_key=self.firecrawl_api_key)
                 
-                result = app.scrape_url(
+                result = app.scrape(
                     act_url,
                     params={
                         'formats': ['extract', 'markdown'],
@@ -240,7 +243,7 @@ class IndiaCodeScraper:
             
             llm = ChatGroq(
                 api_key=self.groq_api_key,
-                model_name="llama-3.1-70b-versatile",
+                model_name="llama-3.3-70b-versatile",
                 temperature=0.1
             )
             
@@ -264,13 +267,13 @@ class IndiaCodeScraper:
             Format your response as JSON:
             {{
                 "primary_acts": [
-                    {{"name": "Act Name", "year": 1882, "key_sections": ["Section 5", "Section 54"], "why": "explanation"}}
+                    {{"title": "Act Title", "year": 1882, "key_sections": ["Section 5", "Section 54"], "reason": "explanation"}}
                 ],
                 "secondary_acts": [
-                    {{"name": "Act Name", "year": 1908, "why": "explanation"}}
+                    {{"title": "Act Title", "year": 1908, "reason": "explanation"}}
                 ],
                 "sections_to_cite": [
-                    {{"act": "Act Name", "section": "Section 54", "title": "Section Title", "relevance": "explanation"}}
+                    {{"act": "Act Title", "section": "Section 54", "title": "Section Title", "reason": "explanation"}}
                 ],
                 "analysis": "How these acts apply to the case"
             }}

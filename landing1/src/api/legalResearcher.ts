@@ -73,6 +73,7 @@ export interface StructuredData {
   incident_date?: string;
   case_type?: string;
   legal_issue_summary?: string;
+  detailed_summary?: string;
   key_evidence_list?: string[];
   applicable_laws?: string[];
   recommended_actions?: string[];
@@ -92,6 +93,7 @@ export interface BackendCase {
 
 // Flattened case for UI
 export interface CaseDetails {
+  detailed_summary?: string;
   case_id: number;
   client_name: string;
   opposing_party: string;
@@ -134,6 +136,7 @@ function flattenCase(backendCase: BackendCase): CaseDetails {
     incident_date: sd.incident_date || "",
     case_type: sd.case_type || "",
     legal_issue_summary: sd.legal_issue_summary || "",
+    detailed_summary: sd.detailed_summary || "",
     key_evidence_list: sd.key_evidence_list || [],
     applicable_laws: sd.applicable_laws || [],
     recommended_actions: sd.recommended_actions || [],
@@ -168,6 +171,7 @@ export interface CaseCreateManual {
   incident_date?: string;
   case_type?: string;
   legal_issue_summary?: string;
+  detailed_summary?: string;
   key_evidence_list?: string[];
   applicable_laws?: string[];
   recommended_actions?: string[];

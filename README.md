@@ -23,6 +23,18 @@
 ### Legal Researcher
 ![Research Module](./images/Researcher.png)
 
+### Indian Kanoon
+![Indian Kanoon](./images/indian%20kanoon.png)
+
+### Evidence Timeline & Gallery
+![Evidence Analysis](./images/evidence.png)
+
+### Acts Analysis
+![Acts Analysis](./images/Acts%20analysis.png)
+
+### Drafting Assistant
+![Drafting Assistant](./images/Drafter_image.png)
+
 ---
 
 ## 📖 Table of Contents

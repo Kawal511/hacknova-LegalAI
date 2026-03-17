@@ -20,7 +20,7 @@ import os
 import requests
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 HF_TOKEN = os.getenv("HF_TOKEN")
 
 logger = logging.getLogger(__name__)

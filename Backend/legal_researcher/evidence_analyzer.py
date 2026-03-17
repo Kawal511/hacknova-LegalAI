@@ -29,7 +29,7 @@ except ImportError as e:
     DEPS_AVAILABLE = False
 
 from dotenv import load_dotenv
-load_dotenv()
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 
 class RateLimiter:
