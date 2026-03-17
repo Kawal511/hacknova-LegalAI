@@ -154,74 +154,109 @@ function ExpandableCaseOutputs({
   items: FormattedCaseOutput[];
   emptyText: string;
 }) {
+  const getPreview = (item: FormattedCaseOutput): string => {
+    const candidate = cleanDisplayText(item.summary) || cleanDisplayText(item.ai_message) || cleanDisplayText(item.judgement);
+    if (!candidate) return "No summary available.";
+    return candidate.length > 90 ? `${candidate.slice(0, 90)}...` : candidate;
+  };
+
+  const getSourceLabel = (source?: string): string => {
+    if (!source) return "Research";
+    return source
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (m) => m.toUpperCase());
+  };
+
   if (!items || items.length === 0) {
     return <p className="text-sm text-[#666]">{emptyText}</p>;
   }
 
   return (
-    <div className="space-y-3">
-      {items.map((item, idx) => (
-        <details key={`${item.title || "case"}-${idx}`} className="border border-[#e5ddd0] rounded-lg bg-white group">
-          <summary className="cursor-pointer list-none p-3 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-[#1a1a1a]">{cleanDisplayText(item.title) || `Case ${idx + 1}`}</p>
-              <p className="text-xs text-[#666]">Click to expand</p>
+    <div className="rounded-2xl border border-[#e3d7bf] bg-[#efe6d1] p-4 md:p-5 shadow-sm">
+      <div className="flex items-center gap-2 mb-4">
+        <svg className="w-5 h-5 text-[#5d4037]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+        </svg>
+        <h4 className="text-lg font-semibold text-[#3b3128]">Research Documents</h4>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        {items.map((item, idx) => (
+          <div key={`${item.title || "case"}-${idx}`} className="rounded-xl border border-[#ddd4c5] bg-[#f8f5ee] shadow-[0_1px_0_rgba(0,0,0,0.03)]">
+            <div className="p-4 flex items-start gap-3">
+              <div className="h-12 w-12 rounded-lg bg-[#ece8de] flex items-center justify-center shrink-0">
+                <svg className="w-6 h-6 text-[#ea7b2b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 3v6h6" />
+                </svg>
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="text-[1.05rem] font-semibold text-[#242424] truncate">{cleanDisplayText(item.title) || `Case ${idx + 1}`}</p>
+                <p className="text-sm text-[#6a6a6a] truncate">PDF | {getPreview(item)}</p>
+              </div>
+
+              <div className="text-xs text-[#8a8a8a] text-right shrink-0 ml-2">
+                <p>{getSourceLabel(item.source)}</p>
+                <p className="mt-1 text-[#a2885a]">{idx + 1}</p>
+              </div>
             </div>
-            <span className="text-xs px-2 py-1 bg-[#e5ddd0] rounded text-[#5d4037] group-open:bg-[#d4c4a8]">Expand</span>
-          </summary>
 
-          <div className="px-3 pb-3 space-y-2 text-sm">
-            <details open className="bg-[#f8f6ef] rounded p-2">
-              <summary className="cursor-pointer text-[#5d4037] font-medium">Details</summary>
-              <ul className="mt-2 list-disc list-inside text-[#1a1a1a] space-y-1">
-                {(item.details || ["No details available."]).map((line, i) => (
-                  <li key={i}>{cleanDisplayText(line) || "No details available."}</li>
-                ))}
-              </ul>
-            </details>
-
-            <details className="bg-[#f8f6ef] rounded p-2">
-              <summary className="cursor-pointer text-[#5d4037] font-medium">Judgement</summary>
-              <p className="mt-2 text-[#1a1a1a] whitespace-pre-wrap">{cleanDisplayText(item.judgement) || "Judgement details not available."}</p>
-            </details>
-
-            <details className="bg-[#f8f6ef] rounded p-2">
-              <summary className="cursor-pointer text-[#5d4037] font-medium">Summary</summary>
-              <p className="mt-2 text-[#1a1a1a] whitespace-pre-wrap">{cleanDisplayText(item.summary) || "No summary available."}</p>
-            </details>
-
-            <details className="bg-[#f8f6ef] rounded p-2">
-              <summary className="cursor-pointer text-[#5d4037] font-medium">Key Points</summary>
-              <ul className="mt-2 list-disc list-inside text-[#1a1a1a] space-y-1">
-                {(item.key_points || ["No key points available."]).map((point, i) => (
-                  <li key={i}>{cleanDisplayText(point) || "No key points available."}</li>
-                ))}
-              </ul>
-            </details>
-
-            <details className="bg-[#f8f6ef] rounded p-2">
-              <summary className="cursor-pointer text-[#5d4037] font-medium">AI Message</summary>
-              <p className="mt-2 text-[#1a1a1a] whitespace-pre-wrap">{cleanDisplayText(item.ai_message) || "No AI message available."}</p>
-            </details>
-
-            <details className="bg-[#f8f6ef] rounded p-2">
-              <summary className="cursor-pointer text-[#5d4037] font-medium">Other Important Sections</summary>
-              {item.other_sections && item.other_sections.length > 0 ? (
-                <div className="mt-2 space-y-2">
-                  {item.other_sections.map((section, i) => (
-                    <div key={i} className="border border-[#ece6d9] rounded p-2 bg-white">
-                      <p className="text-xs font-medium text-[#5d4037]">{cleanDisplayText(section.title)}</p>
-                      <p className="text-sm text-[#1a1a1a] whitespace-pre-wrap">{cleanDisplayText(section.content)}</p>
-                    </div>
+            <div className="px-4 pb-4 pt-2 border-t border-[#e9e1d3] text-sm space-y-3">
+              <section className="bg-[#f3eee2] rounded p-3">
+                <p className="text-[#5d4037] font-semibold mb-2">Details</p>
+                <ul className="mt-2 list-disc list-inside text-[#1a1a1a] space-y-1">
+                  {(item.details || ["No details available."]).map((line, i) => (
+                    <li key={i}>{cleanDisplayText(line) || "No details available."}</li>
                   ))}
-                </div>
-              ) : (
-                <p className="mt-2 text-[#666]">No additional sections available.</p>
-              )}
-            </details>
+                </ul>
+              </section>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <section className="bg-[#f3eee2] rounded p-3">
+                  <p className="text-[#5d4037] font-semibold mb-2">Judgement</p>
+                  <p className="text-[#1a1a1a] whitespace-pre-wrap">{cleanDisplayText(item.judgement) || "Judgement details not available."}</p>
+                </section>
+
+                <section className="bg-[#f3eee2] rounded p-3">
+                  <p className="text-[#5d4037] font-semibold mb-2">Summary</p>
+                  <p className="text-[#1a1a1a] whitespace-pre-wrap">{cleanDisplayText(item.summary) || "No summary available."}</p>
+                </section>
+              </div>
+
+              <section className="bg-[#f3eee2] rounded p-3">
+                <p className="text-[#5d4037] font-semibold mb-2">Key Points</p>
+                <ul className="mt-2 list-disc list-inside text-[#1a1a1a] space-y-1">
+                  {(item.key_points || ["No key points available."]).map((point, i) => (
+                    <li key={i}>{cleanDisplayText(point) || "No key points available."}</li>
+                  ))}
+                </ul>
+              </section>
+
+              <section className="bg-[#f3eee2] rounded p-3">
+                <p className="text-[#5d4037] font-semibold mb-2">AI Message</p>
+                <p className="text-[#1a1a1a] whitespace-pre-wrap">{cleanDisplayText(item.ai_message) || "No AI message available."}</p>
+              </section>
+
+              <section className="bg-[#f3eee2] rounded p-3">
+                <p className="text-[#5d4037] font-semibold mb-2">Other Important Sections</p>
+                {item.other_sections && item.other_sections.length > 0 ? (
+                  <div className="mt-2 space-y-2">
+                    {item.other_sections.map((section, i) => (
+                      <div key={i} className="border border-[#ece6d9] rounded p-2 bg-white">
+                        <p className="text-xs font-medium text-[#5d4037]">{cleanDisplayText(section.title)}</p>
+                        <p className="text-sm text-[#1a1a1a] whitespace-pre-wrap">{cleanDisplayText(section.content)}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-2 text-[#666]">No additional sections available.</p>
+                )}
+              </section>
+            </div>
           </div>
-        </details>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
