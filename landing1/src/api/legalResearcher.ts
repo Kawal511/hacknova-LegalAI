@@ -612,8 +612,9 @@ export async function getAgentHistory(caseId: number, userId: number): Promise<A
   return response.json();
 }
 
-export async function startGoogleAuth(redirectUri: string): Promise<{ auth_url: string }> {
-  const response = await safeFetch(`${AGENT_BASE}/auth/google?redirect_uri=${encodeURIComponent(redirectUri)}`, {
+export async function startGoogleAuth(redirectUri: string, userId?: number): Promise<{ auth_url: string }> {
+  const userParam = userId !== undefined ? `&user_id=${encodeURIComponent(String(userId))}` : "";
+  const response = await safeFetch(`${AGENT_BASE}/auth/google?redirect_uri=${encodeURIComponent(redirectUri)}${userParam}`, {
     headers: buildAuthHeaders(),
   });
 

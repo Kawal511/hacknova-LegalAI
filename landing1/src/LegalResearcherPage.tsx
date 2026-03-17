@@ -862,7 +862,7 @@ function CaseDetailView({ caseData, onBack, onDelete, onRefresh }: CaseDetailPro
     try {
       const apiRoot = (import.meta.env.VITE_API_URL || "http://localhost:8000/legal").replace(/\/legal\/?$/, "");
       const redirectUri = `${apiRoot}/legal/agent/auth/google/callback`;
-      const res = await startGoogleAuth(redirectUri);
+      const res = await startGoogleAuth(redirectUri, DEFAULT_USER_ID);
       if (!res.auth_url) {
         throw new Error("No Google auth URL returned");
       }

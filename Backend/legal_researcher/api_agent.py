@@ -6,7 +6,7 @@ from datetime import datetime
 from time import perf_counter
 from typing import Any, Dict
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import RedirectResponse
 from langchain_core.messages import HumanMessage
 
@@ -437,7 +437,10 @@ def get_agent_history(case_id: int, user_id: int = Depends(get_user_id_flexible)
 
 
 @router.get("/auth/google")
-def google_auth_start(redirect_uri: str | None = None):
+def google_auth_start(
+    redirect_uri: str | None = None,
+    user_id: int | None = Query(None, description="User ID for OAuth callback association"),
+):
     # Use one canonical redirect URI to avoid redirect_uri_mismatch across environments.
     redirect_uri = (os.getenv("GOOGLE_REDIRECT_URI") or redirect_uri or GOOGLE_REDIRECT_URI_DEFAULT).strip()
     try:
@@ -447,10 +450,15 @@ def google_auth_start(redirect_uri: str | None = None):
             status_code=500,
             detail="Google OAuth is not configured. Missing client_secret.json in Backend/legal_researcher.",
         ) from e
+    # Persist user context in OAuth state because callback is a browser redirect without app auth headers.
+    resolved_user_id = int(user_id) if user_id is not None else 1
+    oauth_state = json.dumps({"user_id": resolved_user_id}, separators=(",", ":"))
+
     auth_url, _ = flow.authorization_url(
         access_type="offline",
         include_granted_scopes="true",
         prompt="consent",
+        state=oauth_state,
     )
     return {"auth_url": auth_url}
 
@@ -458,11 +466,25 @@ def google_auth_start(redirect_uri: str | None = None):
 @router.get("/auth/google/callback")
 def google_auth_callback(
     code: str,
+    state: str | None = None,
     redirect_uri: str | None = None,
-    user_id: int = Depends(get_user_id_flexible),
+    user_id: int | None = Query(None, description="User ID fallback if state parsing fails"),
 ):
     if not redirect_uri:
         redirect_uri = os.getenv("GOOGLE_REDIRECT_URI", GOOGLE_REDIRECT_URI_DEFAULT)
+
+    resolved_user_id = user_id
+    if state:
+        try:
+            state_payload = json.loads(state)
+            if isinstance(state_payload, dict) and state_payload.get("user_id") is not None:
+                resolved_user_id = int(state_payload["user_id"])
+        except Exception:
+            # Keep fallback logic below for malformed state.
+            pass
+
+    if resolved_user_id is None:
+        raise HTTPException(status_code=400, detail="Missing user context in OAuth callback")
 
     try:
         flow = get_oauth_flow(redirect_uri)
@@ -480,18 +502,18 @@ def google_auth_callback(
     with db.get_tenant_conn(user_id) as conn:
         existing = conn.execute(
             "SELECT user_id FROM google_credentials WHERE user_id = ?",
-            (user_id,),
+            (resolved_user_id,),
         ).fetchone()
 
         if existing:
             conn.execute(
                 "UPDATE google_credentials SET credentials_json = ? WHERE user_id = ?",
-                (creds_json, user_id),
+                (creds_json, resolved_user_id),
             )
         else:
             conn.execute(
                 "INSERT INTO google_credentials (user_id, credentials_json) VALUES (?, ?)",
-                (user_id, creds_json),
+                (resolved_user_id, creds_json),
             )
         conn.commit()
 
