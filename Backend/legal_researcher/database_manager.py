@@ -172,6 +172,24 @@ class DatabaseRouter:
                 FOREIGN KEY(case_id) REFERENCES cases(case_id)
             )
         """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS google_credentials (
+                user_id INTEGER PRIMARY KEY,
+                credentials_json TEXT
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS agent_state (
+                run_id TEXT PRIMARY KEY,
+                case_id INTEGER,
+                user_id INTEGER,
+                state_json TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
         
                                  
         cursor.execute("""

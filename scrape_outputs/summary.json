@@ -1,0 +1,12 @@
+{
+  "run_1": {
+    "query": "murder Supreme Court judgment site:indiankanoon.org",
+    "count": 3,
+    "file": "C:\\College\\Hackathons\\HackNova\\hacknova-LegalAI\\scrape_outputs\\murder_scrape_1.json"
+  },
+  "run_2": {
+    "query": "murder conviction site:indiankanoon.org",
+    "count": 3,
+    "file": "C:\\College\\Hackathons\\HackNova\\hacknova-LegalAI\\scrape_outputs\\murder_scrape_2.json"
+  }
+}

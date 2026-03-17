@@ -13,6 +13,9 @@ requests==2.32.3
 gunicorn==22.0.0
 langchain-community
 langchain
+langgraph==0.2.67
+google-auth-oauthlib
+google-api-python-client
 fpdf2==2.8.2
 deep-translator==1.11.4
 transformers

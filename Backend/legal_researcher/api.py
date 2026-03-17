@@ -35,7 +35,7 @@ Usage:
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Form, Request, Query
 
 
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
@@ -59,6 +59,7 @@ from database_manager import DatabaseManager
 from case_generator import CaseGenerator
 from secure_chat import SecureChatbot
 from legal_researcher import LegalResearcher, ClientDB, FIRECRAWL_API_KEY
+from case_composer import compose_case_output
 from translation import translate_to_english, translate_from_english, get_supported_languages
 from jwt_auth import (
     create_access_token, 
@@ -256,6 +257,7 @@ class CaseInfo(BaseModel):
     summary: str
     ai_summary: Optional[str] = None
     relevance_score: Optional[float] = None
+    formatted_output: Optional[Dict[str, Any]] = None
 
 class ResearchResponse(BaseModel):
     success: bool
@@ -1004,6 +1006,7 @@ async def conduct_legal_research(request: ResearchRequest):
         
         formatted_results = []
         for case_info in ranked_dicts:
+            formatted_output = compose_case_output(case_info, source="research")
             formatted_results.append(CaseInfo(
                 url=case_info['url'],
                 case_title=case_info['case_title'],
@@ -1014,7 +1017,8 @@ async def conduct_legal_research(request: ResearchRequest):
                 parties=case_info['parties'],
                 summary=case_info['summary'],
                 ai_summary=case_info.get('ai_summary'),
-                relevance_score=case_info.get('relevance_score')
+                relevance_score=case_info.get('relevance_score'),
+                formatted_output=formatted_output,
             ))
         
                                                 
@@ -1315,6 +1319,13 @@ def create_standalone_app() -> FastAPI:
         print("✅ Evidence timeline endpoints loaded")
     except Exception as e:
         print(f"⚠️ Could not load timeline endpoints: {e}")
+
+    try:
+        from api_agent import router as agent_router
+        app.include_router(agent_router)
+        print("✅ Agent endpoints loaded")
+    except Exception as e:
+        print(f"⚠️ Could not load agent endpoints: {e}")
     
     @app.get("/")
     async def root():
@@ -1328,6 +1339,11 @@ def create_standalone_app() -> FastAPI:
     @app.get("/health")
     async def health():
         return {"status": "healthy"}
+
+    @app.get("/favicon.ico", include_in_schema=False)
+    async def favicon():
+        # Avoid noisy browser 404s when callback page is opened directly on backend origin.
+        return Response(status_code=204)
     
     return app
 

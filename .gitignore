@@ -2,6 +2,7 @@
 .env
 .env.local
 .env.*.local
+Backend/legal_researcher/client_secret.json
 
 # Python
 __pycache__/
