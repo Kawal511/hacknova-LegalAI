@@ -631,6 +631,7 @@ function CaseDetailView({ caseData, onBack, onDelete, onRefresh }: CaseDetailPro
   const [showAgent, setShowAgent] = useState(false);
   const [researchResult, setResearchResult] = useState<ResearchResult | null>(null);
   const [researching, setResearching] = useState(false);
+  const [researchError, setResearchError] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // Progress tracking state
@@ -777,17 +778,26 @@ function CaseDetailView({ caseData, onBack, onDelete, onRefresh }: CaseDetailPro
 
   const handleResearch = async () => {
     setResearching(true);
+    setResearchError(null);
     try {
       const res = await conductResearch({
         client_name: caseData.client_name,
         case_title: `${caseData.client_name} vs ${caseData.opposing_party || 'Unknown'}`,
-        description: caseData.legal_issue_summary || caseData.raw_description || "Legal case research",
+        description:
+          caseData.legal_issue_summary ||
+          caseData.raw_description ||
+          `${caseData.client_name} ${caseData.opposing_party || ""} ${caseData.case_type || ""} legal dispute India`,
       });
       if (res.success && res.research) {
         setResearchResult(res.research);
+      } else {
+        setResearchResult(null);
+        setResearchError(res.message || "No relevant cases found. Please refine the query and try again.");
       }
     } catch (err) {
       console.error("Research failed", err);
+      setResearchResult(null);
+      setResearchError("Research request failed. Please try again.");
     } finally {
       setResearching(false);
     }
@@ -1461,6 +1471,9 @@ function CaseDetailView({ caseData, onBack, onDelete, onRefresh }: CaseDetailPro
                     >
                       Start Research
                     </button>
+                    {researchError && (
+                      <p className="mt-3 text-sm text-red-600">{researchError}</p>
+                    )}
                   </div>
                 </div>
               )}

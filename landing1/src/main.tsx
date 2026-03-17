@@ -10,10 +10,7 @@ import { saveAuth, getStoredAuth } from './api/legalResearcher'
 
 // Import your Publishable Key
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
-
-if (!PUBLISHABLE_KEY) {
-  throw new Error("Missing Publishable Key")
-}
+const HAS_CLERK_KEY = Boolean(PUBLISHABLE_KEY)
 
 const API_BASE = "http://localhost:8000";
 
@@ -104,8 +101,30 @@ const CustomSignInPage = () => {
   )
 }
 
+const SignInUnavailablePage = () => {
+  return (
+    <div className="min-h-screen bg-[#f5f1e8] flex items-center justify-center p-4">
+      <div className="w-full max-w-xl bg-white border border-[#d4b896]/50 shadow-xl p-6">
+        <h1 className="text-[#1a1a1a] font-black tracking-wide text-xl">Authentication not configured</h1>
+        <p className="mt-3 text-[#5f523f]">
+          Set <code>VITE_CLERK_PUBLISHABLE_KEY</code> in frontend env to enable Clerk sign-in.
+        </p>
+      </div>
+    </div>
+  )
+}
+
 const ClerkProviderWithRoutes = () => {
-  
+  if (!HAS_CLERK_KEY) {
+    return (
+      <Routes>
+        <Route path="/" element={<NyayaZephyrLanding />} />
+        <Route path="/dashboard" element={<App />} />
+        <Route path="/sign-in/*" element={<SignInUnavailablePage />} />
+      </Routes>
+    )
+  }
+
   return (
     <ClerkProvider 
       publishableKey={PUBLISHABLE_KEY} 

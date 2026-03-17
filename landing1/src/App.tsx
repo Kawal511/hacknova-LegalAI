@@ -12,6 +12,8 @@ import { getUserCases, type CaseDetails } from "./api/legalResearcher";
 import { useTheme, getThemeColors } from "./ThemeContext";
 import { UserButton } from "@clerk/clerk-react";
 
+const HAS_CLERK_KEY = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
+
 interface Block {
   id: number;
   x: number;
@@ -506,7 +508,11 @@ function TopNavbar({ activePage, onNavigate }: { activePage: "dashboard" | "docu
             </div>
 
             {/* User Profile */}
-              <div className="hidden md:flex items-center gap-2 pl-3 border-l border-[#d4cdb8]"><UserButton afterSignOutUrl="/" /></div>
+            {HAS_CLERK_KEY && (
+              <div className="hidden md:flex items-center gap-2 pl-3 border-l border-[#d4cdb8]">
+                <UserButton afterSignOutUrl="/" />
+              </div>
+            )}
 
               {/* Mobile menu button */}
             <button
@@ -549,7 +555,13 @@ function TopNavbar({ activePage, onNavigate }: { activePage: "dashboard" | "docu
               ))}
             </div>
             <div className="mt-3 pt-3 border-t border-[#d4cdb8] flex items-center justify-between">
-              <LanguageSelector />`n                <div className="flex items-center gap-2">`n                  <UserButton afterSignOutUrl="/" />`n                </div>`n              </div>
+              <LanguageSelector />
+              {HAS_CLERK_KEY && (
+                <div className="flex items-center gap-2">
+                  <UserButton afterSignOutUrl="/" />
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

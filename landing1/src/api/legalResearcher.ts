@@ -684,6 +684,7 @@ interface BackendResearchResponse {
   case_title: string;
   results: BackendCaseInfo[];
   total_found: number;
+  message?: string;
 }
 
 export async function conductResearch(data: ResearchRequest): Promise<ResearchResponse> {
@@ -702,6 +703,13 @@ export async function conductResearch(data: ResearchRequest): Promise<ResearchRe
     }
 
     const backendData: BackendResearchResponse = await response.json();
+
+    if (!backendData.success) {
+      return {
+        success: false,
+        message: backendData.message || "No relevant cases found. Refine your query with specific facts, court, or year.",
+      };
+    }
 
     // Transform backend response to frontend format
     const relevantCases: CaseInfo[] = backendData.results.map((r) => ({

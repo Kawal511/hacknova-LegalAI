@@ -273,6 +273,7 @@ class ResearchResponse(BaseModel):
     case_title: str
     results: List[CaseInfo]
     total_found: int
+    message: Optional[str] = None
 
 
 # ====================== AUTHENTICATION ENDPOINTS ======================
@@ -1086,6 +1087,11 @@ async def conduct_legal_research(request: ResearchRequest):
         
                                      
         urls = researcher.find_relevant_cases(request.description)
+
+        # Retry once with a stronger legal query if the primary search returns no links.
+        if not urls:
+            fallback_query = f"{request.case_title} {request.description} India Supreme Court judgment"
+            urls = researcher.find_relevant_cases(fallback_query)
         
         if not urls:
             return ResearchResponse(
@@ -1093,7 +1099,8 @@ async def conduct_legal_research(request: ResearchRequest):
                 client_name=request.client_name,
                 case_title=request.case_title,
                 results=[],
-                total_found=0
+                total_found=0,
+                message="No relevant Indian Kanoon cases were found for this query. Try adding key facts, court, statute, or year."
             )
         
                                      

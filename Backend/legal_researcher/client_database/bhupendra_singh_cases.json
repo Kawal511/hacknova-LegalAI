@@ -1,0 +1,59 @@
+[
+    {
+        "search_id": "search_1773745932",
+        "timestamp": "2026-03-17T16:42:12.546413",
+        "client_input": {
+            "title": "Bhupendra Singh vs The State Of Madhya Pradesh",
+            "description": "Anticipatory bail application under Section 438 of the Cr.P.C. for grant of anticipatory bail in connection with Crime No.68/2023, registered at Police Station Shahgarh, District Sagar (M.P.) for the offences punishable under Sections 341, 294, 323, 327, 506 and 34 of Indian Penal Code."
+        },
+        "citations_found": [
+            {
+                "url": "https://indiankanoon.org/doc/3166040/",
+                "case_title": "Unknown",
+                "court": "High Court",
+                "date": "19 June, 2023",
+                "case_type": "Unknown",
+                "verdict": "Accused Acquitted",
+                "parties": {
+                    "petitioner": "## Bhupendra Singh",
+                    "respondent": "The State Of Madhya Pradesh"
+                },
+                "summary": "Legal Document View [**Unlock Advanced Research with PRISMAI**\\\\ \\\\ Integrated with over 4 crore judgments and laws — designed for legal practitioners, researchers, students and institutions\\\\ \\\\ \\- Know your Kanoon\\\\ \\- Doc Gen Hub\\\\ \\- Counter Argument\\\\ \\- Case Predict AI\\\\ \\- Talk with IK Doc\\\\ \\- ...\\\\ \\\\ Upgrade to Premium] \\ , Cited by \\] Madhya Pradesh High Court Bhupendra Singh vs The State Of Madhya Pradesh on 19 June, 2023 Author: Bench: ``` 1 IN THE HIGH COURT OF MADHYA PRADESH AT JA...",
+                "ai_summary": "Legal Document View [**Unlock Advanced Research with PRISMAI**\\\\ \\\\ Integrated with over 4 crore judgments and laws — designed for legal practitioners, researchers, students and institutions\\\\ \\\\ \\- Know your Kanoon\\\\ \\- Doc Gen Hub\\\\ \\- Counter Argument\\\\ \\- Case Predict AI\\\\ \\- Talk with IK Doc\\\\ ...",
+                "relevance_score": 0.1,
+                "formatted_output": {
+                    "title": "Unknown",
+                    "source": "research",
+                    "details": [
+                        "Title: Unknown",
+                        "Court: High Court",
+                        "Date: 19 June, 2023",
+                        "Case Type: Unknown",
+                        "Reference URL: https://indiankanoon.org/doc/3166040/"
+                    ],
+                    "judgement": "Accused Acquitted",
+                    "summary": "No summary available.",
+                    "key_points": [
+                        "Parties involved: Bhupendra Singh vs The State Of Madhya Pradesh",
+                        "Forum and date: High Court on 19 June, 2023",
+                        "Proceeding type: Unknown",
+                        "Outcome signal: Accused Acquitted",
+                        "Judgement note: Accused Acquitted",
+                        "Summary insight: No summary available."
+                    ],
+                    "ai_message": "No AI message available.",
+                    "other_sections": [
+                        {
+                            "title": "Parties",
+                            "content": "Petitioner: Bhupendra Singh | Respondent: The State Of Madhya Pradesh"
+                        },
+                        {
+                            "title": "Relevance",
+                            "content": "Relevance score: 0.1"
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+]
