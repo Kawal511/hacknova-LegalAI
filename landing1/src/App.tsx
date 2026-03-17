@@ -10,6 +10,7 @@ import { LanguageProvider, useLanguage } from "./LanguageContext";
 import { LanguageSelector } from "./LanguageSelector";
 import { getUserCases, type CaseDetails } from "./api/legalResearcher";
 import { useTheme, getThemeColors } from "./ThemeContext";
+import { UserButton } from "@clerk/clerk-react";
 
 interface Block {
   id: number;
@@ -505,14 +506,9 @@ function TopNavbar({ activePage, onNavigate }: { activePage: "dashboard" | "docu
             </div>
 
             {/* User Profile */}
-            <div className="hidden md:flex items-center gap-2 pl-3 border-l border-[#d4cdb8]">
-              <div className="w-8 h-8 bg-[#d4c4a8] rounded-full flex items-center justify-center text-[#1a1a1a] font-bold text-sm">L1</div>
-              <div className="hidden lg:block">
-                <p className="text-[12px] font-bold text-[#1a1a1a]" style={{ fontFamily: "Montserrat, sans-serif" }}>Lawyer1</p>
-              </div>
-            </div>
+              <div className="hidden md:flex items-center gap-2 pl-3 border-l border-[#d4cdb8]"><UserButton afterSignOutUrl="/" /></div>
 
-            {/* Mobile menu button */}
+              {/* Mobile menu button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="md:hidden p-2 rounded-lg hover:bg-[#e5ddd0] transition-colors"
@@ -553,12 +549,7 @@ function TopNavbar({ activePage, onNavigate }: { activePage: "dashboard" | "docu
               ))}
             </div>
             <div className="mt-3 pt-3 border-t border-[#d4cdb8] flex items-center justify-between">
-              <LanguageSelector />
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-[#d4c4a8] rounded-full flex items-center justify-center text-[#1a1a1a] font-bold text-sm">L1</div>
-                <p className="text-[12px] font-bold text-[#1a1a1a]" style={{ fontFamily: "Montserrat, sans-serif" }}>Lawyer1</p>
-              </div>
-            </div>
+              <LanguageSelector />`n                <div className="flex items-center gap-2">`n                  <UserButton afterSignOutUrl="/" />`n                </div>`n              </div>
           </div>
         )}
       </div>
@@ -2767,6 +2758,8 @@ export default function App() {
     </LanguageProvider>
   );
 }
+
+
 
 
 

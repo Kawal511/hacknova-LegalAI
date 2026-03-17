@@ -93,6 +93,7 @@ export interface BackendCase {
 
 // Flattened case for UI
 export interface CaseDetails {
+  detailed_summary?: string;
   case_id: number;
   client_name: string;
   opposing_party: string;

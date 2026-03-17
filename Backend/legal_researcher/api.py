@@ -179,6 +179,11 @@ class LoginRequest(BaseModel):
     username: str
     password: str
 
+class ClerkSyncRequest(BaseModel):
+    clerk_id: str
+    username: str
+    email: Optional[str] = None
+
 # AuthResponse is imported from jwt_auth module
 
                      
@@ -269,6 +274,44 @@ class ResearchResponse(BaseModel):
 
 
 # ====================== AUTHENTICATION ENDPOINTS ======================
+
+@router.post("/auth/clerk-sync")
+async def sync_clerk_user(request_data: ClerkSyncRequest, request: Request):
+    """
+    Sync a Clerk user to the local database, returning a JWT token for backend auth.
+    """
+    db = get_db_manager()
+    client_ip = request.client.host if request.client else "unknown"
+    user_agent = request.headers.get("user-agent", "unknown")
+
+    user_id = db.sync_clerk_user(request_data.clerk_id, request_data.username, request_data.email)
+    
+    if not user_id:
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to sync Clerk user"
+        )
+        
+    db.log_audit(
+        user_id=user_id,
+        action="LOGIN_SUCCESS_CLERK",
+        resource_type="auth",
+        ip_address=client_ip,
+        details=f"Clerk user {request_data.username} synced and logged in. IP: {client_ip}, UA: {user_agent}"
+    )
+
+    # Generate JWT token
+    token = create_access_token(
+        data={"sub": request_data.username, "user_id": user_id}
+    )
+
+    return AuthResponse(
+        token=token,
+        token_type="bearer",
+        user_id=user_id,
+        username=request_data.username,
+        message="Clerk user synced successfully"
+    )
 
 @router.post("/auth/register", response_model=AuthResponse)
 async def register_user(credentials: UserCredentials, request: Request):
@@ -1362,7 +1405,7 @@ def create_standalone_app() -> FastAPI:
         app.include_router(evidence_router)
         print("✅ Evidence analysis endpoints loaded")
     except Exception as e:
-        print(f"⚠️ Could not load evidence endpoints: {e}")
+        print(f"Could not load evidence endpoints: {e}")
 
     # Include drafting assistant router
     try:
@@ -1370,7 +1413,7 @@ def create_standalone_app() -> FastAPI:
         app.include_router(drafting_router, prefix="/legal/drafting", tags=["Drafting Assistant"])
         print("✅ Drafting assistant endpoints loaded")
     except Exception as e:
-        print(f"⚠️ Could not load drafting endpoints: {e}")
+        print(f"Could not load drafting endpoints: {e}")
 
     # Include evidence timeline router
     try:
@@ -1378,7 +1421,7 @@ def create_standalone_app() -> FastAPI:
         app.include_router(timeline_router)
         print("✅ Evidence timeline endpoints loaded")
     except Exception as e:
-        print(f"⚠️ Could not load timeline endpoints: {e}")
+        print(f"Could not load timeline endpoints: {e}")
     
     @app.get("/")
     async def root():
