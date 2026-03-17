@@ -652,7 +652,7 @@ function DocumentsPage({ onNavigate }: { onNavigate: (page: "dashboard" | "docum
           judge: sd.judge || "Not specified",
           appellant: caseData.client_name || sd.appellant || "Not specified",
           respondent: sd.opposing_party || sd.respondent || "Not specified",
-          detailed_summary: sd.legal_issue_summary || caseData.legal_issue_summary || "Case loaded. You can now ask questions about this case.",
+          detailed_summary: sd.detailed_summary || sd.legal_issue_summary || caseData.legal_issue_summary || "Case loaded. You can now ask questions about this case.",
           verdict: caseData.stage || sd.verdict || "In Progress",
           victim: sd.victim || null,
           facts: sd.facts || null,
@@ -735,7 +735,7 @@ function DocumentsPage({ onNavigate }: { onNavigate: (page: "dashboard" | "docum
         judge: data.structured_data?.judge || "Not specified",
         appellant: data.client_name || "Not specified",
         respondent: data.structured_data?.opposing_party || "Not specified",
-        detailed_summary: data.structured_data?.legal_issue_summary || "Document analyzed successfully. You can now ask questions about this case.",
+        detailed_summary: data.structured_data?.detailed_summary || data.structured_data?.legal_issue_summary || "Document analyzed successfully. You can now ask questions about this case.",
         verdict: data.stage || "In Progress",
         victim: data.structured_data?.victim || null
       });
@@ -748,7 +748,7 @@ function DocumentsPage({ onNavigate }: { onNavigate: (page: "dashboard" | "docum
 
     } catch (error) {
       console.error("Upload error:", error);
-      alert("Failed to analyze document. Please ensure the backend is running and try again.");
+      alert(error instanceof Error ? error.message : "Failed to analyze document. Please ensure the backend is running and try again.");
       // Keep the file visible even simply for preview
       // setFileUrl(null); 
     } finally {

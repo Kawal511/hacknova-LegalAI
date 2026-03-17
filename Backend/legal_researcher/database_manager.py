@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+import os
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 """
 This module implements the Multi-Tenant Database Architecture. It defines the DatabaseRouter class which routes queries to isolated tenant databases (lawyer_X.db) or the master authentication database based on user context.
 """

@@ -3,7 +3,7 @@ uvicorn==0.30.1
 pydantic>=2.10.0
 pydantic-settings>=2.3.0
 python-multipart==0.0.9
-PyPDF2==3.0.1
+pymupdf
 firecrawl-py>=1.0.0
 langchain-groq
 python-dotenv==1.0.1

@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+import os
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 """
 This is the application entry point. It initializes the FastAPI app, configures CORS, and includes the API router.
 """
@@ -18,7 +21,7 @@ Production-grade features:
 import os
 import json
 import getpass
-from PyPDF2 import PdfReader
+import fitz  # PyMuPDF
 from database_manager import DatabaseManager
 from case_generator import CaseGenerator
 from secure_chat import SecureChatbot
@@ -190,14 +193,14 @@ def new_case_pdf(db: DatabaseManager, generator: CaseGenerator, user_id: int):
     print("\n⏳ Reading PDF...")
     
     try:
-        reader = PdfReader(pdf_path)
+doc = fitz.open(pdf_path)
         full_text = ""
-        for i, page in enumerate(reader.pages):
-            text = page.extract_text() or ""
-            full_text += text + "\n"
-            print(f"  Processed page {i+1}/{len(reader.pages)}")
-        
-        if len(full_text) < 100:
+        for i, page in enumerate(doc):
+            full_text += page.get_text() + "\n"
+            print(f"  Processed page {i+1}/{len(doc)}")
+        doc.close()
+
+        if not full_text.strip():
             print("❌ Could not extract text. PDF may be scanned/image-based.")
             return
         

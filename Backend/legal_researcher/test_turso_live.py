@@ -3,7 +3,7 @@ import libsql_experimental as sqlite3
 from database_manager import get_db_router
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 turso_url = os.getenv("TURSO_DATABASE_URL")
 turso_token = os.getenv("TURSO_AUTH_TOKEN")

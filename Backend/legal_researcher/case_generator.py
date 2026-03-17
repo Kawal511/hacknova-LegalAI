@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+import os
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 """
 This module allows for AI-powered Case Generation. It extracts structured legal data (parties, evidence, issues) from raw text/PDFs using LLMs and also handles PDF export functionality.
 """
@@ -24,13 +27,24 @@ class CaseGenerator:
         Minimizes tokens by asking for specific fields only.
         """
         prompt = f"""
-        Analyze the following legal intake notes. Extract key details into a JSON object.
-        Fields required: "client_name", "opposing_party", "incident_date", "legal_issue_summary", "key_evidence_list", "applicable_laws", "recommended_actions".
+        Analyze the following legal document or intake notes thoroughly. 
+        Extract key details into a strictly formatted JSON object. 
         
+        Fields required MUST include: 
+        - "client_name": The name of the client or primary party.
+        - "opposing_party": The opposing party, if any.
+        - "incident_date": The date(s) of key incidents.
+        - "legal_issue_summary": A concise 2-sentence summary of the core legal issue.
+        - "detailed_summary": A very detailed summary of exactly 70-100 words outlining the core arguments, facts, and conclusions of the document continuously.
+        - "key_evidence_list": Array of strings of evidence mentioned.
+        - "applicable_laws": Array of strings of mentioned or highly relevant laws.
+        - "recommended_actions": Array of strings for next steps.
+
         Intake Notes:
         {raw_text}
-        
-        Respond ONLY with the JSON object.
+
+        Respond ONLY with the JSON object. Do not include markdown formatting or extra text.
+
         """
 
         try:
