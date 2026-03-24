@@ -7,6 +7,33 @@ import {
 } from 'lucide-react';
 import { suggestDrafting, saveDraft, type DraftingResponse, type CaseDetails } from './api/legalResearcher';
 
+function normalizeDraftText(input: string): string {
+    if (!input) return "";
+
+    let text = input;
+
+    // Normalize escaped new lines and repeated spacing from model output.
+    text = text.replace(/\\r\\n/g, "\n").replace(/\\n/g, "\n").replace(/\t/g, " ");
+
+    // Remove markdown emphasis while keeping content.
+    text = text.replace(/\*\*([^*]+)\*\*/g, "$1");
+    text = text.replace(/\*([^*]+)\*/g, "$1");
+    text = text.replace(/__([^_]+)__/g, "$1");
+    text = text.replace(/_([^_]+)_/g, "$1");
+
+    // Remove markdown heading markers and block quote markers.
+    text = text.replace(/^#{1,6}\s*/gm, "");
+    text = text.replace(/^>\s*/gm, "");
+
+    // Convert markdown bullets to clean legal-list style where possible.
+    text = text.replace(/^\s*[-*]\s+/gm, "- ");
+
+    // Clean excessive blank lines.
+    text = text.replace(/\n{3,}/g, "\n\n");
+
+    return text.trim();
+}
+
 interface DraftingAssistantProps {
     cases: CaseDetails[];
     userId: number;
@@ -47,7 +74,8 @@ export default function DraftingAssistant({ cases, userId, onBack }: DraftingAss
 
     const applySuggestion = () => {
         if (aiSuggestion) {
-            setContent(prev => prev + (prev ? "\n\n" : "") + aiSuggestion.suggestion);
+            const cleaned = normalizeDraftText(aiSuggestion.suggestion);
+            setContent(prev => prev + (prev ? "\n\n" : "") + cleaned);
             setAiSuggestion(null);
             setInstruction("");
         }
@@ -236,7 +264,7 @@ export default function DraftingAssistant({ cases, userId, onBack }: DraftingAss
                                         <button onClick={() => setAiSuggestion(null)} className="text-gray-400 hover:text-gray-600">×</button>
                                     </div>
                                     <p className="text-sm font-serif italic text-gray-800 bg-white p-2 border rounded whitespace-pre-wrap border-l-4 border-l-[#f97316]">
-                                        {aiSuggestion.suggestion}
+                                        {normalizeDraftText(aiSuggestion.suggestion)}
                                     </p>
 
                                     {aiSuggestion.reasoning && (
