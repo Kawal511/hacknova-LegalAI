@@ -1,405 +1,311 @@
-# ⚖️ NyayaZephyr: Advanced Legal AI Platform
+# NyayaZephyr - Legal AI Platform
 
-> **Status**: Active Development  
-> **Version**: 2.1.0 (Multi-Tenant + Enhanced Security)  
-> **Security Level**: High (JWT, Audit Logging, AI Guardrails, Input Sanitization)  
-> **Branding**: NyayaZephyr Intelligence Systems  
-> **🔗 Live Demo**: [https://nyayazephyr.vercel.app](https://landing1-9ceab148d-atharva-deos-projects.vercel.app)
+NyayaZephyr is a full-stack legal operations and intelligence platform for case lifecycle management, AI-assisted legal research, evidence analysis, drafting support, and secure multi-tenant data handling.
 
----
+It combines a React + TypeScript frontend with a FastAPI backend and multiple AI pipelines (LLM, vision, retrieval, and agentic orchestration).
 
-## 📸 App Preview
+## What This Project Solves
 
-### Landing Page
-![Landing Page Hero](./images/LandingPage1.png)
-![Landing Page Features](./images/LandingPage2.png)
+Legal teams typically use fragmented tools for:
+- Case intake and tracking
+- Legal research across jurisdictions
+- Handling document and media evidence
+- Drafting legal documents
+- Maintaining auditability and tenant isolation
 
-### Dashboard
-![Dashboard Overview](./images/Dashboard.png)
+NyayaZephyr unifies these workflows into one system with:
+- User-aware case management
+- AI extraction from notes and PDFs
+- Context-aware legal chat
+- Indian and international research surfaces
+- Visual evidence analysis (image/video)
+- Interactive evidence timeline
+- Drafting assistant with legal style constraints
+- Audit logging and security controls
 
-### Document Analyzer
-![Document Analysis Interface](./images/Doc%20Analyser.png)
+## Monorepo Structure
 
-### Legal Researcher
-![Research Module](./images/Researcher.png)
-
-### Indian Kanoon
-![Indian Kanoon](./images/indian%20kanoon.png)
-
-### Evidence Timeline & Gallery
-![Evidence Analysis](./images/evidence.png)
-
-### Acts Analysis
-![Acts Analysis](./images/Acts%20analysis.png)
-
-### Drafting Assistant
-![Drafting Assistant](./images/Drafter_image.png)
-
----
-
-## 📖 Table of Contents
-1. [Executive Summary](#-executive-summary)
-2. [Tech Stack](#-tech-stack)
-3. [Master Architecture](#-master-architecture)
-4. [Multi-Tenant Database System](#-multi-tenant-database-system)
-5. [Security & Compliance](#-security--compliance)
-6. [RAG & Extraction Architecture](#-rag--extraction-architecture)
-7. [Legal Researcher Architecture](#-legal-researcher-architecture)
-8. [API Reference](#-api-reference)
-9. [Frontend Dashboard](#-frontend-dashboard)
-10. [Installation & Setup](#-installation--setup)
-
----
-
-## 🚀 Executive Summary
-
-**NyayaZephyr** is a production-grade AI platform designed for legal professionals to manage cases, perform automated legal research, and interact with case documents using secure, context-aware AI. 
-
-Unlike standard LegalWrappers, NyayaZephyr implements a **defense-in-depth security architecture** featuring strict multi-tenancy, immutable audit logging, AI guardrails to prevent hallucinations and prompt injection attacks, and multilingual support for global accessibility.
-
-### Key Features
-- 📁 **Case Management**: Create, track, and manage legal cases with progress tracking
-- 🤖 **AI-Powered Chat**: Context-aware conversations with your case documents
-- 🔍 **Legal Research**: Automated research using Firecrawl and Groq LLMs
-- 🔬 **AI Evidence Analyzer**: Automated image and video analysis using Gemini Vision
-- ⏳ **Interactive Timeline**: Visual evidence chronology with AI-extracted key moments
-- 🔒 **Enterprise Security**: JWT auth, multi-tenant isolation, audit logging
-- 🌍 **Multilingual**: Support for 10+ languages including Hindi, Spanish, French
-- 📊 **Admin Dashboard**: Real-time security monitoring and compliance tracking
-
----
-
-## 💻 Tech Stack
-
-### Frontend (Client-Side)
-*   **Framework**: React 18 (Vite)
-*   **Language**: TypeScript
-*   **Styling**: Tailwind CSS, PostCSS
-*   **Animation**: Framer Motion
-*   **State Management**: React Hooks (Context API)
-*   **Routing**: React Router DOM
-
-### Backend (Server-Side)
-*   **Framework**: FastAPI (Python 3.10+)
-*   **Server**: Uvicorn (ASGI)
-*   **Authentication**: PyJWT (Stateless), BCrypt (Hashing)
-*   **Database**: SQLite (Multi-Tenant Strategy)
-*   **Validation**: Pydantic v2
-
-### AI & Data Engineering
-*   **LLM Inference**: Groq LPU (Llama-3-70b-Versatile)
-*   **Vision API**: Google Gemini-1.5-Flash (via Google Generative AI SDK)
-*   **Image Processing**: OpenCV, Pillow (PIL)
-*   **Web Search**: Firecrawl SDK (Custom Legal Scraper)
-*   **PDF Processing**: PyPDF2, pdfplumber
-*   **Guards**: Custom Regex Guardrails, Output Validators
-
-### DevOps & Tools
-*   **Version Control**: Git
-*   **Package Management**: pip, npm
-*   **Environment**: dotenv
-
----
-
-## 🏗️ Master Architecture
-
-The platform follows a **Secure Monorepo** structure with a decoupled React frontend and a FastAPI backend.
-
-```mermaid
-
-graph TD
-    User[Legal Professional] -->|HTTPS/TLS| FE[React Frontend]
-    FE -->|JWT Auth Bearer| API[FastAPI Backend]
-    
-    subgraph "Backend Security Layer"
-        API -->|Validate Token| JWT[JWT Auth Service]
-        API -->|Rate Limit| RL[Rate Limiter]
-        API -->|Sanitize Input| GR[Guardrails Engine]
-    end
-    
-    subgraph "Data Persistence Layer"
-        API -->|Route Request| Router[Database Router]
-        Router -->|Auth/User Data| MasterDB[(Master Auth DB)]
-        Router -->|Case Data| TenantDB[(Tenant DB: lawyer_X.db)]
-    end
-    
-    subgraph "AI Processing Layer"
-        API -->|Context| Chat[Secure Chatbot]
-        API -->|Extraction| Gen[Case Generator]
-        Chat <-->|Inference| Groq["Groq LPU (Llama 3)"]
-        Gen <-->|Research| Firecrawl[Firecrawl Search]
-    end
-    
+```text
+hacknova-LegalAI/
+├── README.md
+├── Backend/
+│   ├── legal_researcher/            # Main backend service (FastAPI)
+│   │   ├── api.py                   # Core API app + router composition
+│   │   ├── database_manager.py      # Multi-tenant DB router and schema ops
+│   │   ├── jwt_auth.py              # JWT + flexible auth dependencies
+│   │   ├── secure_chat.py           # Context-aware guarded chat
+│   │   ├── legal_researcher.py      # Firecrawl + Groq case research
+│   │   ├── api_evidence.py          # Evidence upload/analysis APIs
+│   │   ├── api_timeline.py          # Timeline APIs
+│   │   ├── api_drafting.py          # Drafting assistant APIs
+│   │   ├── api_international.py     # eCourts, IndiaCode, GovInfo APIs
+│   │   ├── api_agent.py             # Agent run APIs + state persistence
+│   │   ├── evidence_analyzer.py     # Gemini vision analysis logic
+│   │   ├── case_generator.py        # Structured case extraction + export
+│   │   ├── guardrails.py            # Prompt/output/citation safety checks
+│   │   ├── databases/               # master_auth.db + lawyer_{id}.db
+│   │   ├── evidence_files/          # Stored image/video evidence
+│   │   └── client_database/         # JSON research snapshots
+│   ├── server.py                    # Legacy launcher (references Zephyr)
+│   └── start_server.py              # Legacy launcher helper
+├── landing1/                        # Frontend app (Vite + React + TS)
+│   ├── src/
+│   │   ├── App.tsx
+│   │   ├── LegalResearcherPage.tsx
+│   │   ├── EvidencePanel.tsx
+│   │   ├── DraftingAssistant.tsx
+│   │   ├── MultiSourceResearchPanel.tsx
+│   │   └── api/                     # TS clients for backend APIs
+│   └── package.json
+├── render.yaml                      # Render deployment for backend API
+└── test_workflow.py                 # End-to-end backend smoke workflow
 ```
 
----
-
-## 🗄️ Multi-Tenant Database System
-
-We have migrated from a monolithic database to a **Database-per-Tenant** architecture to ensure maximum data isolation and GDPR compliance.
-
-### The Database Router Pattern
-The `DatabaseRouter` class (`database_manager.py`) intelligently routes queries based on the authenticated context.
-
-1.  **Master Database (`master_auth.db`)**
-    *   **Purpose**: Stores global user identities and authentication credentials.
-    *   **Tables**: `users`, `auth_audit_logs`.
-    *   **Security**: Minimal PII. No case data.
-
-2.  **Tenant Databases (`databases/lawyer_{id}.db`)**
-    *   **Purpose**: Isolated storage for a specific lawyer's cases, documents, and chat logs.
-    *   **Isolation**: File-level separation. A lawyer CANNOT query another lawyer's file physically.
-    *   **Tables**: `cases`, `documents`, `chat_logs`, `audit_logs`.
-
-### Schema Details
-
-#### Master Schema
-```sql
-CREATE TABLE users (
-    user_id INTEGER PRIMARY KEY,
-    username TEXT UNIQUE,
-    password_hash TEXT, -- Bcrypt
-    email TEXT
-);
-```
-
-#### Tenant Schema (Replicated per User)
-```sql
-CREATE TABLE cases (
-    case_id INTEGER PRIMARY KEY,
-    client_name TEXT,
-    structured_data JSON, -- AI extracted metadata
-    progress INTEGER,
-    stage TEXT
-);
-
-CREATE TABLE documents (
-    doc_id INTEGER PRIMARY KEY,
-    case_id INTEGER REFERENCES cases(case_id),
-    parsed_text TEXT, -- Full text for RAG
-    uploaded_at TIMESTAMP
-);
-
-CREATE TABLE audit_logs (
-    log_id INTEGER PRIMARY KEY,
-    action TEXT, -- e.g., 'VIEW_CASE', 'EXPORT_PDF'
-    resource_id INTEGER,
-    ip_address TEXT,
-    timestamp TIMESTAMP
-);
-```
-
----
-
-## 🔒 Security & Compliance
-
-ZeroDay implements a **Zero Trust** security model.
-
-### 1. Authentication (Stateless JWT)
-*   **Token**: JSON Web Tokens (HS256) with configurable expiry.
-*   **Hashing**: Passwords hashed using `bcrypt` (work factor 12).
-*   **Flow**:
-    1.  User POSTs credentials to `/auth/login`.
-    2.  Server returns `access_token`.
-    3.  Client attaches header: `Authorization: Bearer <token>`.
-    4.  `Depends(get_user_id)` validates token and extracts `user_id` for routing.
-
-### 2. Authorization (Strict Siloing)
-*   Every database operation requires a `user_id` context.
-*   The `DatabaseRouter` constructs the path `databases/lawyer_{user_id}.db`.
-*   **Impossible Cross-Tenant Access**: It is physically impossible for User A to query User B's cases because the file path would be different.
-
-### 3. Audit Logging (Immutable)
-Every critical action is logged to the tenant's `audit_logs` table (or master `auth_audit_logs`).
-*   **Logged Events**: Login (Success/Fail), View Case, Delete Case, Export PDF, AI Chat.
-*   **Data Fields**: IP Address, User Agent, Timestamp, Resource ID, Action Status.
-*   **Admin Dashboard**: Visualizes these logs for compliance reviews.
-
-### 4. AI Guardrails (`guardrails.py`)
-*   **Input Sanitization**: Regex filters to block prompt injection (e.g., "Ignore previous instructions").
-*   **Output Validation**: Checks response for safety / prohibited content.
-*   **Hallucination Checker**: Verifies that citations in AI response actually exist in the provided context/documents.
-
----
-
-## 🧠 RAG & Extraction Architecture
-
-The platform uses a specialized retrieval pipeline optimized for legal texts.
-
-```mermaid
-graph LR
-    subgraph "Ingestion Pipeline"
-        PDF[PDF Document] -->|PyPDF2| Text[Raw Text]
-        Text -->|Clean & Normalize| DocDB[(Tenant DB: Documents)]
-    end
-
-    subgraph "Retrieval & Generation"
-        User[User Query] -->|1. Sanitize| Guard[Guardrails]
-        Guard -->|2. Fetch Context| ContextEngine[Context Engine]
-        
-        ContextEngine <-->|Query| DocDB
-        ContextEngine <-->|Fetch History| ChatLog[(Your Chat Logs)]
-        
-        ContextEngine -->|3. Assemble Prompt| LLM[Groq LPU]
-        LLM -->|4. Generate Response| Validator[Hallucination Checker]
-        Validator -->|5. Verified Answer| Final[Final Response]
-    end
-```
-
-### 1. Ingestion Pipeline
-1.  **PDF Upload**: `PyPDF2` extracts raw text from uploaded legal documents.
-2.  **Text Cleaning**: Normalization of whitespace, removal of headers/footers.
-3.  **Storage**: Cleaned text is stored in `documents` table (Tenant DB).
-
-### 2. AI Extraction Engine (`CaseGenerator`)
-*   **Input**: Unstructured client notes or PDF text.
-*   **Model**: Llama-3-70b via Groq (0.1 Temperature).
-*   **Prompting**: Single-shot prompting asking for rigid JSON output.
-*   **Output**: Structured JSON containing:
-    *   `client_name`
-    *   `opposing_party`
-    *   `legal_issues` (Array)
-    *   `key_evidence` (Array)
-    *   `recommended_actions`
-
-### 3. Context-Aware Chat (`SecureChatbot`)
-1.  **Context Assembly**:
-    *   Fetches structured case metadata.
-    *   Fetches full text of attached documents.
-    *   Fetches last 5 chat messages (Conversation History).
-2.  **System Prompt**: Injects a strict "Legal Assistant" persona with safety instructions.
-3.  **Inference**: Sends `User Query + Context` to Groq LPU.
-4.  **Verification**: Responses are cross-checked against case facts to warn about potential hallucinations.
-
----
-
-## 🔬 AI Evidence Analyzer & Timeline
-
-A specialized module for analyzing visual evidence (images and videos) using **Google Gemini Vision**.
-
-### Visual Evidence Workflow
-1.  **Media Upload**: Supports high-res images (up to 10MB) and videos (up to 100MB).
-2.  **AI Vision Analysis**:
-    *   **Object Detection**: Identifies relevant items (weapons, documents, vehicle damage).
-    *   **Scene Understanding**: Generates detailed forensic descriptions.
-    *   **Text Extraction (OCR)**: Extracts text from signs, labels, and documents within images.
-    *   **Safety Audit**: Automatic NSFW/violence detection with optional blurring.
-3.  **Video Chronology**:
-    *   Samples frames at configurable intervals.
-    *   Analyzes each frame to detect "Key Moments".
-    *   Generates an **Interactive Evidence Timeline** for rapid review of long footage.
-4.  **Annotated Visuals**: Generates high-contrast bounding boxes on detected objects for court presentation.
-
----
-
-## 🔍 Legal Researcher Architecture
-
-A dedicated module for autonomous web-based legal research using **Firecrawl** and **Sentence-BERT**.
+## System Architecture
 
 ```mermaid
 graph TD
-    subgraph "Legal Research Pipeline"
-        Q[User Query] -->|1. Generate Search Terms| LLM1[Groq LPU]
-        LLM1 -->|2. Search & Scrape| FC[Firecrawl SDK]
-        FC -->|Raw Markdown| Ext[Info Extractor]
-        Ext -->|JSON Cases| RR[Sentence-BERT Re-Ranker]
-        
-        subgraph "Local Re-Ranking Engine"
-            RR -->|all-MiniLM-L6-v2| Embed[Vector Embeddings]
-            Embed -->|NumPy Cosine Sim| Rank[Relevance Score]
-            Rank -->|Boost Supreme Court| FinalSort[Sorted Results]
-        end
-        
-        FinalSort -->|3. Response| API[FastAPI Endpoint]
-    end
+    User[Legal Professional] --> FE[React Frontend]
+    FE -->|HTTP + JWT or user_id fallback| API[FastAPI: Backend/legal_researcher/api.py]
+
+    API --> AUTH[jwt_auth.py]
+    API --> DBR[database_manager.py]
+    API --> CHAT[secure_chat.py]
+    API --> CASEGEN[case_generator.py]
+    API --> RESEARCH[legal_researcher.py]
+    API --> EVIDENCE[api_evidence.py + evidence_analyzer.py]
+    API --> TIMELINE[api_timeline.py]
+    API --> DRAFT[api_drafting.py]
+    API --> AGENT[api_agent.py]
+
+    DBR --> MASTER[(master_auth.db)]
+    DBR --> TENANT[(lawyer_N.db per user)]
+    EVIDENCE --> FILES[(evidence_files/)]
+    RESEARCH --> JSONDB[(client_database/*.json)]
+
+    CHAT --> GROQ[Groq Llama 3.3]
+    CASEGEN --> GROQ
+    RESEARCH --> FIRECRAWL[Firecrawl]
+    EVIDENCE --> GEMINI[Gemini Vision]
 ```
 
-### Workflow
-1.  **Query Generation**: LLM analyzes basic case facts to generate 3-5 specific search queries (e.g., "Supreme Court Property dispute brother sister").
-2.  **Web Scraping (Firecrawl)**:
-    *   Searches trusted legal repositories (e.g., Indian Kanoon).
-    *   Respects `robots.txt` and implements rate limiting (6s delay).
-    *   Extracts page content as markdown.
-3.  **Local Re-Ranking Engine**:
-    *   A local `SentenceTransformer` (`all-MiniLM-L6-v2`) converts documents and queries to vector space.
-    *   Computes relevance locally via `NumPy` dot-product cosine similarity.
-    *   Boosts specific geographic and hierarchical jurisdictions (e.g., `+0.2` score for Supreme Court/India matches) to heavily favor decisive case law.
-4.  **Storage**: Results are stored in a structured JSON database (per client) for later retrieval.
+## Intended Workflow (Product Flow)
 
-### OS Compatibility Note (macOS / Apple Silicon)
-> **Warning:** Apple's `Accelerate` multiprocessing backend contains known bugs with Rust-based Tokenizers and multiprocessing in Python, leading to `[mutex.cc : 452] RAW: Lock blocking` freezes.
-> To run the backend safely on macOS, set the following environment variables:
-> `export TOKENIZERS_PARALLELISM=false`
-> `export OMP_NUM_THREADS=1`
-> *(See `macos.md` for a comprehensive breakdown and Windows/Linux instructions).*
+1. User authenticates (or Clerk sync is used in frontend-enabled deployments).
+2. User creates a case via:
+   - Manual form entry
+   - AI extraction from raw notes
+   - PDF upload + parsing + AI structuring
+3. User works the case through:
+   - Context-aware legal chat
+   - Indian Kanoon import/search
+   - Multi-source research (Acts + US case law + eCourts stats)
+4. User uploads evidence (image/video):
+   - Gemini analyzes media
+   - Safety flags + findings are stored
+   - Timeline events are created/managed
+5. User drafts legal text in Drafting Assistant and saves back to case documents.
+6. User exports case package and reviews audit/security telemetry.
+7. Optional agent run can execute multi-step legal research workflows and persist run state.
 
----
+## Core Features
 
-## 📡 API Reference
+### 1) Authentication and Identity
+- Register/login endpoints
+- JWT token issuance and validation
+- Flexible auth dependency (`user_id` query fallback for development)
+- Clerk sync endpoint for frontend identity bridging
 
-Base URL: `/legal`
+### 2) Multi-Tenant Case Management
+- Per-user tenant database files (`lawyer_{user_id}.db`)
+- CRUD for cases and progress tracking
+- Structured JSON case schema + raw narrative support
+- Attachment/document persistence
 
-### Auth
-*   `POST /auth/register`: Create account.
-*   `POST /auth/login`: Get JWT.
-*   `POST /auth/refresh`: Refresh token.
+### 3) AI Case Structuring
+- Extracts structured legal fields from raw notes/PDF text
+- Generates summaries and recommended actions
+- Saves normalized case records for downstream chat/research
 
-### Case Management
-*   `GET /cases`: List all cases (Tenant-scoped).
-*   `POST /cases/manual`: Create case manually.
-*   `POST /cases/ai-extract`: Create case from raw text.
-*   `POST /cases/pdf-upload`: Create case from PDF.
-*   `GET /cases/{id}`: Get details + documents.
-*   `DELETE /cases/{id}`: Delete case (GDPR compliant).
+### 4) Context-Aware Legal Chat
+- Pulls case metadata + document text + recent chat history
+- Uses guardrails for input/output checks
+- Citation verification against stored context
+- Per-case chat history and summaries
 
-### Chat
-*   `POST /chat`: Interact with case context.
-*   `GET /chat/history/{case_id}`: Get conversation.
+### 5) Legal Research
+- Indian research through Firecrawl scraping + ranking
+- Case metadata extraction (court/type/date/verdict)
+- Multi-source research APIs for:
+  - eCourts statistics and notices
+  - IndiaCode acts search/relevance analysis
+  - US federal case law (GovInfo)
 
-### Admin & Security
-*   `GET /audit/logs`: Fetch security logs.
-*   `GET /stats/{user_id}`: Dashboard metrics.
+### 6) Evidence Intelligence
+- Image/video upload with file validation
+- Gemini-based scene/object/text extraction
+- NSFW/safety warning flags
+- Evidence gallery and annotated retrieval endpoints
 
----
+### 7) Evidence Timeline
+- Timeline listing by case
+- Manual event creation
+- Event annotation and update APIs
 
-## 💻 Frontend Dashboard
+### 8) Drafting Assistant
+- AI drafting suggestions based on case + evidence context
+- Citation-style prompting (Bluebook-oriented)
+- Save generated draft as case document
 
-The frontend (`landing1`) is a modern React application built with:
-*   **Vite + TypeScript**: For performance and type safety.
-*   **Admin Dashboard**: A dedicated security view (`/admin`) displaying audit trails, vulnerability status, and system health.
-*   **UI Components**: Custom components inspired by modern financial/legal dashboards (Standardized Beige/White theme).
+### 9) Agentic Research Execution
+- Async run model with run IDs
+- Persisted state in tenant DB (`agent_state` table)
+- Step/tool-hop limits and execution logs
+- Optional Google auth callback support for agent tools
 
----
+### 10) Security and Auditability
+- Password hashing with bcrypt
+- JWT access tokens with expiry
+- Guardrails against prompt injection and unsafe outputs
+- Tenant and auth audit logs
 
-## 🛠️ Installation & Setup
+## Backend API Surface (High-Level)
 
-### Prerequisites
-*   Python 3.9+
-*   Node.js 18+
-*   Groq API Key
-*   FireC
+Base prefix: `/legal`
 
-### Backend Setup
+- Auth: `/auth/register`, `/auth/login`, `/auth/me`, `/auth/refresh`, `/auth/clerk-sync`
+- Cases: `/cases/manual`, `/cases/ai-extract`, `/cases/pdf-upload`, `/cases`, `/cases/{id}`, `/cases/{id}/progress`, `/cases/import-kanoon`
+- Chat: `/chat`, `/chat/history/{case_id}`, `/chat/summary/{case_id}`
+- Export: `/export/{case_id}`
+- Research: `/research`, `/research/history/{client_name}`, `/cases/search-kanoon`
+- Multi-source: `/ecourts/*`, `/acts/*`, `/research/international`
+- Evidence: `/evidence/analyze-image`, `/evidence/analyze-video`, and retrieval/delete routes
+- Timeline: `/evidence/timeline/*`
+- Drafting: `/drafting/suggest`, `/drafting/save`
+- Agent: `/agent/*`
+- Security/Admin: `/stats/{user_id}`, `/audit/*`, `/security/status`
+
+Also available at app root:
+- `/` (service metadata)
+- `/health`
+- `/docs` (OpenAPI UI)
+
+## Data Architecture
+
+### Master Database
+- `master_auth.db`
+- Stores global identity/auth data (`users`, `auth_audit_logs`)
+
+### Tenant Databases
+- `lawyer_{id}.db`
+- Stores case, document, chat, evidence, timeline, search, and agent state data
+
+This design provides file-level tenant isolation and simplifies per-tenant backup/deletion strategies.
+
+## Tech Stack
+
+### Frontend
+- React 19 + TypeScript
+- Vite 7
+- React Router
+- Clerk (optional auth integration)
+- Framer Motion
+- Tailwind CSS 4
+- SWR / Fetch-based API clients
+
+### Backend
+- Python 3.10+ (3.11 recommended)
+- FastAPI + Uvicorn
+- Pydantic v2
+- SQLite / libsql-experimental (Turso mode when configured)
+- bcrypt + PyJWT
+
+### AI and Data
+- Groq Llama 3.3 for text generation/chat
+- Firecrawl for legal web retrieval
+- Gemini Vision for image/video evidence analysis
+- PyMuPDF/PyPDF2 and OCR tooling for document ingestion
+
+## Local Setup
+
+### 1) Backend
+
 ```bash
 cd Backend/legal_researcher
-# Create virtual env
+
+# Windows
 python -m venv venv
-source venv/bin/activate
+venv\Scripts\activate
 
-# Install core deps
+# macOS/Linux
+# python3 -m venv venv
+# source venv/bin/activate
+
 pip install -r requirements.txt
-
-# Install Evidence Analyzer deps (OpenCV, Gemini)
 pip install -r requirements_evidence.txt
 
-# Environment Setup
-cp .env.example .env
-# Edit .env and add your GROQ_API_KEY, FIRECRAWL_API_KEY, and GEMINI_API_KEY
+# create env file
+copy .env.example .env   # Windows
+# cp .env.example .env   # macOS/Linux
 ```
 
-### Frontend Setup
+Populate `.env` with:
+- `GROQ_API_KEY`
+- `FIRECRAWL_API_KEY`
+- `GEMINI_API_KEY` (required for evidence analysis)
+- `JWT_SECRET`
+- optional: `HF_TOKEN`, Turso settings
+
+Run backend:
+
+```bash
+uvicorn api:app --host 0.0.0.0 --port 8000 --reload
+```
+
+### 2) Frontend
+
 ```bash
 cd landing1
 npm install
 npm run dev
 ```
+
+Frontend defaults:
+- Uses `http://localhost:8000/legal` for main legal API client
+- Some modules call `http://localhost:8000` directly for specialized routes
+
+Set env in frontend as needed:
+- `VITE_API_URL=http://localhost:8000/legal`
+- `VITE_CLERK_PUBLISHABLE_KEY=...` (optional)
+
+## Deployment Notes
+
+- `render.yaml` deploys backend from `Backend/legal_researcher` and starts `uvicorn api:app`.
+- Frontend can be deployed independently (Vercel or static host).
+
+## Testing and Verification
+
+- `test_workflow.py` provides an integration-style backend workflow:
+  - auth
+  - case creation from PDF
+  - evidence upload
+  - chat query
+- Additional backend tests and utility scripts exist under `Backend/legal_researcher`.
+
+## Current Operational Notes
+
+- The canonical backend entrypoint for this repo is `Backend/legal_researcher/api.py`.
+- `Backend/server.py` and `Backend/start_server.py` reference a `Backend/Zephyr` path, which is not present in this workspace and should be treated as legacy scripts unless restored.
+- CORS is currently permissive (`allow_origins=["*"]`) in standalone app mode; tighten for production.
+
+## Roadmap Directions (Suggested)
+
+- Harden production auth path to JWT-only (remove query fallback in production mode)
+- Add role-based authorization for admin endpoints
+- Expand automated tests for evidence/timeline/drafting flows
+- Introduce structured migration tooling for tenant schema updates
+- Add observability (metrics/tracing) for AI calls and long-running agent runs
+
+## License
+
+No license file is currently defined in this repository. Add a project license before public distribution.
