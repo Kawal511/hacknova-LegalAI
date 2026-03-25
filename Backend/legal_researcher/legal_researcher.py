@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+import os
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 """
 This module manages autonomous legal research. It utilizes the Firecrawl API to search authoritative legal sources, scrape relevant case law, and generate summaries for the user.
 """
@@ -6,6 +9,7 @@ import os
 import json
 import time
 import re
+from urllib.parse import quote_plus
 from datetime import datetime
 try:
     from firecrawl import FirecrawlApp as Firecrawl  # v1.0+ uses FirecrawlApp
@@ -83,7 +87,7 @@ class LegalResearcher:
                                                   
         self.llm = ChatGroq(
             api_key=groq_key,
-            model_name="llama-3.1-8b-instant",                                   
+            model_name="llama-3.3-70b-versatile",
             temperature=0.3,
             max_tokens=300
         )
@@ -136,42 +140,51 @@ Summary:"""
             print("⚠️ Firecrawl not available - cannot search cases")
             return []
         
-        self._wait_for_rate_limit()
-        
-                                        
-        query = f'{description} "Supreme Court" "judgment" site:indiankanoon.org'
-        print(f"🔍 Searching: {query}...")
-
-        try:
-                                                                                
-                                                                 
-                                                                                         
-                                                                                 
-                                                                              
-                                                                    
-            
-            kanoon_search_url = f"https://indiankanoon.org/search/?formInput={query.replace(' ', '+')}"
-            
-            response = self.app.scrape(
-                kanoon_search_url,
-                formats=['markdown']
-            )
-            
-                                                                       
-            markdown = response.markdown or ''
-                                                                
-            doc_ids = re.findall(r'indiankanoon\.org/doc/(\d+)', markdown)
-            
-                                                           
-            unique_ids = list(dict.fromkeys(doc_ids))[:5]
-            full_urls = [f"https://indiankanoon.org/doc/{doc_id}/" for doc_id in unique_ids]
-            
-            print(f"🔎 Found {len(full_urls)} potential citations.")
-            return full_urls
-
-        except Exception as e:
-            print(f"❌ Search Error: {e}")
+        raw_description = (description or "").strip()
+        if not raw_description:
             return []
+
+        compact = re.sub(r"\s+", " ", raw_description)
+        compact = compact[:220]
+        queries = [
+            f'{compact} site:indiankanoon.org/doc',
+            f'{compact} "judgment" "India"',
+            f'{compact} "motor accident" OR "criminal" OR "writ" site:indiankanoon.org',
+        ]
+
+        all_doc_ids = []
+        seen_doc_ids = set()
+
+        for idx, query in enumerate(queries):
+            self._wait_for_rate_limit()
+            print(f"🔍 Searching variant {idx + 1}/{len(queries)}: {query}...")
+
+            try:
+                kanoon_search_url = f"https://indiankanoon.org/search/?formInput={quote_plus(query)}"
+                response = self.app.scrape(kanoon_search_url, formats=['markdown'])
+                markdown = response.markdown or ''
+
+                # Firecrawl output varies; support absolute, relative, and query-param links.
+                doc_ids = []
+                doc_ids.extend(re.findall(r'indiankanoon\.org/doc/(\d+)', markdown))
+                doc_ids.extend(re.findall(r'www\.indiankanoon\.org/doc/(\d+)', markdown))
+                doc_ids.extend(re.findall(r'\b/doc/(\d+)/', markdown))
+                doc_ids.extend(re.findall(r'docid=(\d+)', markdown))
+
+                for doc_id in doc_ids:
+                    if doc_id not in seen_doc_ids:
+                        seen_doc_ids.add(doc_id)
+                        all_doc_ids.append(doc_id)
+
+                if len(all_doc_ids) >= 5:
+                    break
+
+            except Exception as e:
+                print(f"⚠️ Search variant {idx + 1} failed: {e}")
+
+        full_urls = [f"https://indiankanoon.org/doc/{doc_id}/" for doc_id in all_doc_ids[:5]]
+        print(f"🔎 Found {len(full_urls)} potential citations.")
+        return full_urls
 
     def get_case_details(self, urls):
         """

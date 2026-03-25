@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from pathlib import Path
 from dotenv import load_dotenv
-from fastapi import HTTPException, Security, Depends
+from fastapi import HTTPException, Security, Depends, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 
@@ -152,7 +152,7 @@ def get_user_id(current_user: dict = Depends(get_current_user)) -> int:
                                                              
 class OptionalHTTPBearer(HTTPBearer):
     """Optional bearer token - doesn't raise error if missing."""
-    async def __call__(self, request) -> Optional[HTTPAuthorizationCredentials]:
+    async def __call__(self, request: Request) -> Optional[HTTPAuthorizationCredentials]:
         try:
             return await super().__call__(request)
         except HTTPException:

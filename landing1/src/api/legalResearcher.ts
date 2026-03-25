@@ -4,10 +4,10 @@
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000/legal";
 
 // Safe fetch wrapper to prevent crashes
-async function safeFetch(url: string, options?: RequestInit): Promise<Response> {
+export async function safeFetch(url: string, options?: RequestInit, timeoutMs: number = 30000): Promise<Response> {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     const response = await fetch(url, {
       ...options,
@@ -73,6 +73,7 @@ export interface StructuredData {
   incident_date?: string;
   case_type?: string;
   legal_issue_summary?: string;
+  detailed_summary?: string;
   key_evidence_list?: string[];
   applicable_laws?: string[];
   recommended_actions?: string[];
@@ -92,6 +93,7 @@ export interface BackendCase {
 
 // Flattened case for UI
 export interface CaseDetails {
+  detailed_summary?: string;
   case_id: number;
   client_name: string;
   opposing_party: string;
@@ -134,6 +136,7 @@ function flattenCase(backendCase: BackendCase): CaseDetails {
     incident_date: sd.incident_date || "",
     case_type: sd.case_type || "",
     legal_issue_summary: sd.legal_issue_summary || "",
+    detailed_summary: sd.detailed_summary || "",
     key_evidence_list: sd.key_evidence_list || [],
     applicable_laws: sd.applicable_laws || [],
     recommended_actions: sd.recommended_actions || [],
@@ -168,6 +171,7 @@ export interface CaseCreateManual {
   incident_date?: string;
   case_type?: string;
   legal_issue_summary?: string;
+  detailed_summary?: string;
   key_evidence_list?: string[];
   applicable_laws?: string[];
   recommended_actions?: string[];
@@ -470,6 +474,162 @@ export async function clearChatHistory(caseId: number, userId: number = 1): Prom
   }
 }
 
+// ==================== AGENT ====================
+
+const AGENT_BASE = `${API_BASE}/agent`;
+
+function getStoredAccessToken(): string | null {
+  return (
+    localStorage.getItem("access_token") ||
+    localStorage.getItem("legal_access_token") ||
+    sessionStorage.getItem("access_token") ||
+    null
+  );
+}
+
+function buildAuthHeaders(): HeadersInit {
+  const token = getStoredAccessToken();
+  if (!token) {
+    return { "Content-Type": "application/json" };
+  }
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+}
+
+export interface AgentRunResponse {
+  run_id: string;
+  case_id: number;
+  user_id: number;
+  verification_passed: boolean;
+  email_sent: boolean;
+  calendar_event_id: string;
+  research_results_count: number;
+  last_message: string;
+  step_count: number;
+  tool_hops: number;
+  stop_reason: string;
+  duration_ms: number;
+  logs: AgentLogEntry[];
+  formatted_cases?: FormattedCaseOutput[];
+}
+
+export interface AgentRunAsyncResponse {
+  run_id: string;
+  case_id: number;
+  user_id: number;
+  status: "running";
+}
+
+export interface AgentRunStatusResponse extends AgentRunResponse {
+  status: "running" | "completed" | "failed";
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface FormattedOtherSection {
+  title: string;
+  content: string;
+}
+
+export interface FormattedCaseOutput {
+  title: string;
+  source?: string;
+  details?: string[];
+  judgement?: string;
+  summary?: string;
+  key_points?: string[];
+  ai_message?: string;
+  other_sections?: FormattedOtherSection[];
+}
+
+export interface AgentLogEntry {
+  ts?: string;
+  level?: string;
+  stage?: string;
+  message?: string;
+}
+
+export interface AgentHistoryItem {
+  run_id: string;
+  case_id: number;
+  user_id: number;
+  state: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function runAgent(caseId: number, userId: number, message?: string): Promise<AgentRunResponse> {
+  const response = await safeFetch(`${AGENT_BASE}/run/${caseId}?user_id=${userId}`, {
+    method: "POST",
+    headers: buildAuthHeaders(),
+    body: JSON.stringify({ message: message || "" }),
+  }, 180000);
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to run agent");
+  }
+
+  return response.json();
+}
+
+export async function runAgentAsync(caseId: number, userId: number, message?: string): Promise<AgentRunAsyncResponse> {
+  const response = await safeFetch(`${AGENT_BASE}/run_async/${caseId}?user_id=${userId}`, {
+    method: "POST",
+    headers: buildAuthHeaders(),
+    body: JSON.stringify({ message: message || "" }),
+  }, 15000);
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to start agent run");
+  }
+
+  return response.json();
+}
+
+export async function getAgentRunStatus(runId: string, userId: number): Promise<AgentRunStatusResponse> {
+  const response = await safeFetch(`${AGENT_BASE}/run_status/${runId}?user_id=${userId}`, {
+    headers: buildAuthHeaders(),
+  }, 15000);
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to load run status");
+  }
+
+  return response.json();
+}
+
+export async function getAgentHistory(caseId: number, userId: number): Promise<AgentHistoryItem[]> {
+  const response = await safeFetch(`${AGENT_BASE}/history/${caseId}?user_id=${userId}`, {
+    headers: buildAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to load agent history");
+  }
+
+  return response.json();
+}
+
+export async function startGoogleAuth(redirectUri: string, userId?: number): Promise<{ auth_url: string }> {
+  const userParam = userId !== undefined ? `&user_id=${encodeURIComponent(String(userId))}` : "";
+  const response = await safeFetch(`${AGENT_BASE}/auth/google?redirect_uri=${encodeURIComponent(redirectUri)}${userParam}`, {
+    headers: buildAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to start Google OAuth");
+  }
+
+  return response.json();
+}
+
 // ==================== RESEARCH ====================
 
 export interface ResearchRequest {
@@ -487,6 +647,7 @@ export interface CaseInfo {
   case_type?: string;
   verdict?: string;
   ai_summary?: string;
+  formatted_output?: FormattedCaseOutput;
 }
 
 export interface ResearchResult {
@@ -514,6 +675,7 @@ interface BackendCaseInfo {
   parties: { petitioner: string; respondent: string };
   summary: string;
   ai_summary?: string;
+  formatted_output?: FormattedCaseOutput;
 }
 
 interface BackendResearchResponse {
@@ -522,6 +684,7 @@ interface BackendResearchResponse {
   case_title: string;
   results: BackendCaseInfo[];
   total_found: number;
+  message?: string;
 }
 
 export async function conductResearch(data: ResearchRequest): Promise<ResearchResponse> {
@@ -541,6 +704,13 @@ export async function conductResearch(data: ResearchRequest): Promise<ResearchRe
 
     const backendData: BackendResearchResponse = await response.json();
 
+    if (!backendData.success) {
+      return {
+        success: false,
+        message: backendData.message || "No relevant cases found. Refine your query with specific facts, court, or year.",
+      };
+    }
+
     // Transform backend response to frontend format
     const relevantCases: CaseInfo[] = backendData.results.map((r) => ({
       title: r.case_title,
@@ -551,6 +721,7 @@ export async function conductResearch(data: ResearchRequest): Promise<ResearchRe
       case_type: r.case_type,
       verdict: r.verdict,
       ai_summary: r.ai_summary,
+      formatted_output: r.formatted_output,
     }));
 
     // Extract legal principles from verdicts and case types

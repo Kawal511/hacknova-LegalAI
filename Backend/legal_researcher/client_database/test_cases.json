@@ -78,5 +78,60 @@
                 "ai_summary": "Here is a 2-3 sentence summary of the Indian legal case:\n\nThe dispute in this case was about the decriminalization of consensual same-sex relationships in India, with the petitioners challenging the constitutionality of Section 377 of the Indian Penal Code. The Supreme Court, in a landmark judgment, upheld the decision in Navtej Singh Johar (2018) and held that consensual same-sex relationships between adults are not a criminal offense. This judgment effectively decriminalized same-sex relationships in India."
             }
         ]
+    },
+    {
+        "search_id": "search_1773728684",
+        "timestamp": "2026-03-17T11:54:44.234597",
+        "client_input": {
+            "title": "test case",
+            "description": "murder cases"
+        },
+        "citations_found": [
+            {
+                "url": "https://indiankanoon.org/doc/185056386/",
+                "case_title": "Unknown",
+                "court": "Supreme Court of India",
+                "date": "5 February, 2019",
+                "case_type": "Criminal",
+                "verdict": "Disposed",
+                "parties": {
+                    "petitioner": "## Ibrahim Rasul Malek",
+                    "respondent": "State Of Gujarat"
+                },
+                "summary": "Legal Document View [**Unlock Advanced Research with PRISMAI**\\\\ \\\\ Integrated with over 4 crore judgments and laws — designed for legal practitioners, researchers, students and institutions\\\\ \\\\ \\- Know your Kanoon\\\\ \\- Doc Gen Hub\\\\ \\- Counter Argument\\\\ \\- Case Predict AI\\\\ \\- Talk with IK Doc\\\\ \\- ...\\\\ \\\\ Upgrade to Premium] \\ , Cited by \\] Gujarat High Court Ibrahim Rasul Malek vs State Of Gujarat on 5 February, 2019 Author: Bench: , ``` R/CR.A/1314/2018 JUDGEMENT IN THEHIGHCOURTOF GUJARAT...",
+                "ai_summary": "Here's a 2-3 sentence summary of the Indian legal case:\n\nThe dispute in this case was about six convicts seeking to suspend their life imprisonment sentence, which was passed by the trial court in a sessions case. The Gujarat High Court, in a common order, heard and disposed of the applications under Section 389 of the Code of Criminal Procedure, 1973. The court decided to dismiss the applications, upholding the substantive order of sentence of life imprisonment.",
+                "relevance_score": 0.2
+            },
+            {
+                "url": "https://indiankanoon.org/doc/45733958/",
+                "case_title": "Unknown",
+                "court": "Supreme Court of India",
+                "date": "5 February, 2019",
+                "case_type": "Criminal",
+                "verdict": "Disposed",
+                "parties": {
+                    "petitioner": "## Imran Mayyudin Malek",
+                    "respondent": "State Of Gujarat"
+                },
+                "summary": "Legal Document View [**Unlock Advanced Research with PRISMAI**\\\\ \\\\ Integrated with over 4 crore judgments and laws — designed for legal practitioners, researchers, students and institutions\\\\ \\\\ \\- Know your Kanoon\\\\ \\- Doc Gen Hub\\\\ \\- Counter Argument\\\\ \\- Case Predict AI\\\\ \\- Talk with IK Doc\\\\ \\- ...\\\\ \\\\ Upgrade to Premium] \\ , Cited by \\] Gujarat High Court Imran Mayyudin Malek vs State Of Gujarat on 5 February, 2019 Author: Bench: , ``` R/CR.A/1313/2018 JUDGEMENT IN THEHIGHCOURTOF GUJARA...",
+                "ai_summary": "Here is a 2-3 sentence summary of the Indian legal case:\n\nThe dispute was about six convicts who were sentenced to life imprisonment and sought to suspend their sentence under Section 389 of the Code of Criminal Procedure, 1973. The Gujarat High Court heard the applications and decided to dismiss them, upholding the life imprisonment sentence passed by the trial court. The court's decision was based on the fact that the applicants had not shown sufficient grounds for suspending their sentence.",
+                "relevance_score": 0.2
+            },
+            {
+                "url": "https://indiankanoon.org/doc/152529741/",
+                "case_title": "Unknown",
+                "court": "Supreme Court of India",
+                "date": "13 November, 2024",
+                "case_type": "Criminal",
+                "verdict": "Accused Acquitted",
+                "parties": {
+                    "petitioner": "## Haribhau S/O Rajaram Telgote And 2 ...",
+                    "respondent": "The State Of Maharashtra Thr. Pso, Ps, ..."
+                },
+                "summary": "Legal Document View [**Unlock Advanced Research with PRISMAI**\\\\ \\\\ Integrated with over 4 crore judgments and laws — designed for legal practitioners, researchers, students and institutions\\\\ \\\\ \\- Know your Kanoon\\\\ \\- Doc Gen Hub\\\\ \\- Counter Argument\\\\ \\- Case Predict AI\\\\ \\- Talk with IK Doc\\\\ \\- ...\\\\ \\\\ Upgrade to Premium] \\ , Cited by \\] Bombay High Court Haribhau S/O Rajaram Telgote And 2 ... vs The State Of Maharashtra Thr. Pso, Ps, ... on 13 November, 2024 Author: Bench: ``` 2024:BHC-...",
+                "ai_summary": "Here's a 2-3 sentence summary of the case:\n\nThe dispute was about the confirmation of the death sentence imposed on three accused, Haribhau, Dwarkabai, and Shyam, who were convicted of murder under the Indian Penal Code. The Bombay High Court, in a judgment dated November 13, 2024, confirmed the death sentence imposed by the Sessions Court. The court upheld the conviction and sentence, rejecting the appeals filed by the accused.",
+                "relevance_score": 0.2
+            }
+        ]
     }
 ]

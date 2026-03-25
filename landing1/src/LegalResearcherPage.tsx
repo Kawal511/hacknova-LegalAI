@@ -24,10 +24,19 @@ import {
   importKanoonDocument,
   uploadEvidence,
   getCaseResearchHistory,
+  runAgentAsync,
+  getAgentRunStatus,
+  getAgentHistory,
+  startGoogleAuth,
   type CaseDetails,
   type ChatMessage,
   type ResearchResult,
   type KanoonSearchResult,
+  type AgentRunResponse,
+  type FormattedCaseOutput,
+  type AgentRunStatusResponse,
+  type AgentLogEntry,
+  type AgentHistoryItem,
 } from "./api/legalResearcher";
 
 // ==================== CREATE CASE MODAL ====================
@@ -37,6 +46,220 @@ interface CreateCaseModalProps {
 }
 
 const DEFAULT_USER_ID = 1; // Default user ID for demo purposes
+
+function cleanDisplayText(input?: string): string {
+  if (!input) return "";
+  let text = String(input);
+  text = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  text = text.replace(/\*\*([^*]+)\*\*/g, "$1");
+  text = text.replace(/\*([^*]+)\*/g, "$1");
+  text = text.replace(/__([^_]+)__/g, "$1");
+  text = text.replace(/_([^_]+)_/g, "$1");
+  text = text.replace(/\\\\/g, " ");
+  text = text.replace(/\\\[/g, "[").replace(/\\\]/g, "]");
+  text = text.replace(/\\\(/g, "(").replace(/\\\)/g, ")");
+  text = text.replace(/\\-/g, "-").replace(/\\#/g, "#").replace(/\\\./g, ".");
+  text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1");
+  text = text.replace(/`([^`]+)`/g, "$1");
+  text = text.replace(/^#{1,6}\s+/gm, "");
+  text = text.replace(/^[-*+]\s+/gm, "");
+  text = text.replace(/^>\s*/gm, "");
+  text = text.replace(/^\d+[.)]\s+/gm, "");
+  text = text.replace(/```/g, "");
+  text = text.replace(/[ \t]+/g, " ");
+  text = text.replace(/\n{3,}/g, "\n\n");
+  return text.trim();
+}
+
+function fallbackFormattedFromResearchCase(caseInfo: {
+  title?: string;
+  url?: string;
+  snippet?: string;
+  court?: string;
+  date?: string;
+  case_type?: string;
+  verdict?: string;
+  ai_summary?: string;
+}): FormattedCaseOutput {
+  const title = caseInfo.title || "Case Output";
+  return {
+    title,
+    source: "research",
+    details: [
+      `Title: ${title}`,
+      `Court: ${caseInfo.court || "Not specified"}`,
+      `Date: ${caseInfo.date || "Not specified"}`,
+      `Case Type: ${caseInfo.case_type || "Not specified"}`,
+      `Reference URL: ${caseInfo.url || "Not available"}`,
+    ],
+    judgement: caseInfo.verdict || "Judgement details not explicitly available.",
+    summary: caseInfo.snippet || "No summary available.",
+    key_points: [
+      caseInfo.verdict ? `Outcome signal: ${caseInfo.verdict}` : "Outcome signal not clearly available.",
+      caseInfo.court ? `Forum: ${caseInfo.court}` : "Forum not specified.",
+      caseInfo.date ? `Date marker: ${caseInfo.date}` : "Date not specified.",
+    ],
+    ai_message: caseInfo.ai_summary || caseInfo.snippet || "No AI message available.",
+    other_sections: [],
+  };
+}
+
+function fallbackFormattedFromAgentState(state: any): FormattedCaseOutput[] {
+  const researchResults = Array.isArray(state?.research_results) ? state.research_results : [];
+  if (researchResults.length > 0) {
+    return researchResults.map((item: any, idx: number) => {
+      const title = item?.case_title || item?.title || `Research Case ${idx + 1}`;
+      return {
+        title,
+        source: "agent_research",
+        details: [
+          `Title: ${title}`,
+          `Reference URL: ${item?.url || "Not available"}`,
+        ],
+        judgement: item?.verdict || state?.stop_reason || "Judgement details not explicitly available.",
+        summary: item?.summary || "No summary available.",
+        key_points: [
+          item?.summary ? `Summary insight: ${String(item.summary).slice(0, 160)}${String(item.summary).length > 160 ? "..." : ""}` : "No summarized research insight available.",
+        ],
+        ai_message: item?.summary || state?.last_message || "No AI message available.",
+        other_sections: [],
+      };
+    });
+  }
+
+  const aiMessage = state?.last_message || "No synthesized message available.";
+  return [
+    {
+      title: "Agent Output",
+      source: "agent_output",
+      details: [
+        `Run ID: ${state?.run_id || "unknown"}`,
+        `Status: ${state?.stop_reason || "completed"}`,
+      ],
+      judgement: state?.stop_reason || "completed",
+      summary: aiMessage,
+      key_points: [
+        `Agent stop reason: ${state?.stop_reason || "completed"}`,
+      ],
+      ai_message: aiMessage,
+      other_sections: [],
+    },
+  ];
+}
+
+function ExpandableCaseOutputs({
+  items,
+  emptyText,
+}: {
+  items: FormattedCaseOutput[];
+  emptyText: string;
+}) {
+  const getPreview = (item: FormattedCaseOutput): string => {
+    const candidate = cleanDisplayText(item.summary) || cleanDisplayText(item.ai_message) || cleanDisplayText(item.judgement);
+    if (!candidate) return "No summary available.";
+    return candidate.length > 90 ? `${candidate.slice(0, 90)}...` : candidate;
+  };
+
+  const getSourceLabel = (source?: string): string => {
+    if (!source) return "Research";
+    return source
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (m) => m.toUpperCase());
+  };
+
+  if (!items || items.length === 0) {
+    return <p className="text-sm text-[#666]">{emptyText}</p>;
+  }
+
+  return (
+    <div className="rounded-2xl border border-[#e3d7bf] bg-[#efe6d1] p-4 md:p-5 shadow-sm">
+      <div className="flex items-center gap-2 mb-4">
+        <svg className="w-5 h-5 text-[#5d4037]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+        </svg>
+        <h4 className="text-lg font-semibold text-[#3b3128]">Research Documents</h4>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        {items.map((item, idx) => (
+          <div key={`${item.title || "case"}-${idx}`} className="rounded-xl border border-[#ddd4c5] bg-[#f8f5ee] shadow-[0_1px_0_rgba(0,0,0,0.03)]">
+            <div className="p-4 flex items-start gap-3">
+              <div className="h-12 w-12 rounded-lg bg-[#ece8de] flex items-center justify-center shrink-0">
+                <svg className="w-6 h-6 text-[#ea7b2b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 3v6h6" />
+                </svg>
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="text-[1.05rem] font-semibold text-[#242424] truncate">{cleanDisplayText(item.title) || `Case ${idx + 1}`}</p>
+                <p className="text-sm text-[#6a6a6a] truncate">PDF | {getPreview(item)}</p>
+              </div>
+
+              <div className="text-xs text-[#8a8a8a] text-right shrink-0 ml-2">
+                <p>{getSourceLabel(item.source)}</p>
+                <p className="mt-1 text-[#a2885a]">{idx + 1}</p>
+              </div>
+            </div>
+
+            <div className="px-4 pb-4 pt-2 border-t border-[#e9e1d3] text-sm space-y-3">
+              <section className="bg-[#f3eee2] rounded p-3">
+                <p className="text-[#5d4037] font-semibold mb-2">Details</p>
+                <ul className="mt-2 list-disc list-inside text-[#1a1a1a] space-y-1">
+                  {(item.details || ["No details available."]).map((line, i) => (
+                    <li key={i}>{cleanDisplayText(line) || "No details available."}</li>
+                  ))}
+                </ul>
+              </section>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <section className="bg-[#f3eee2] rounded p-3">
+                  <p className="text-[#5d4037] font-semibold mb-2">Judgement</p>
+                  <p className="text-[#1a1a1a] whitespace-pre-wrap">{cleanDisplayText(item.judgement) || "Judgement details not available."}</p>
+                </section>
+
+                <section className="bg-[#f3eee2] rounded p-3">
+                  <p className="text-[#5d4037] font-semibold mb-2">Summary</p>
+                  <p className="text-[#1a1a1a] whitespace-pre-wrap">{cleanDisplayText(item.summary) || "No summary available."}</p>
+                </section>
+              </div>
+
+              <section className="bg-[#f3eee2] rounded p-3">
+                <p className="text-[#5d4037] font-semibold mb-2">Key Points</p>
+                <ul className="mt-2 list-disc list-inside text-[#1a1a1a] space-y-1">
+                  {(item.key_points || ["No key points available."]).map((point, i) => (
+                    <li key={i}>{cleanDisplayText(point) || "No key points available."}</li>
+                  ))}
+                </ul>
+              </section>
+
+              <section className="bg-[#f3eee2] rounded p-3">
+                <p className="text-[#5d4037] font-semibold mb-2">AI Message</p>
+                <p className="text-[#1a1a1a] whitespace-pre-wrap">{cleanDisplayText(item.ai_message) || "No AI message available."}</p>
+              </section>
+
+              <section className="bg-[#f3eee2] rounded p-3">
+                <p className="text-[#5d4037] font-semibold mb-2">Other Important Sections</p>
+                {item.other_sections && item.other_sections.length > 0 ? (
+                  <div className="mt-2 space-y-2">
+                    {item.other_sections.map((section, i) => (
+                      <div key={i} className="border border-[#ece6d9] rounded p-2 bg-white">
+                        <p className="text-xs font-medium text-[#5d4037]">{cleanDisplayText(section.title)}</p>
+                        <p className="text-sm text-[#1a1a1a] whitespace-pre-wrap">{cleanDisplayText(section.content)}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-2 text-[#666]">No additional sections available.</p>
+                )}
+              </section>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function CreateCaseModal({ onClose, onCaseCreated }: CreateCaseModalProps) {
   const [tab, setTab] = useState<"manual" | "ai" | "pdf">("manual");
@@ -405,8 +628,10 @@ function CaseDetailView({ caseData, onBack, onDelete, onRefresh }: CaseDetailPro
   const [showMultiSource, setShowMultiSource] = useState(false);
   const [showEvidence, setShowEvidence] = useState(false);
   const [showActs, setShowActs] = useState(false);
+  const [showAgent, setShowAgent] = useState(false);
   const [researchResult, setResearchResult] = useState<ResearchResult | null>(null);
   const [researching, setResearching] = useState(false);
+  const [researchError, setResearchError] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // Progress tracking state
@@ -421,6 +646,24 @@ function CaseDetailView({ caseData, onBack, onDelete, onRefresh }: CaseDetailPro
   const [docSearchResults, setDocSearchResults] = useState<KanoonSearchResult[]>([]);
   const [searchingDocs, setSearchingDocs] = useState(false);
   const [importingDoc, setImportingDoc] = useState(false);
+
+  // Agent state
+  const [agentInstruction, setAgentInstruction] = useState("");
+  const [runningAgent, setRunningAgent] = useState(false);
+  const [agentError, setAgentError] = useState("");
+  const [agentResult, setAgentResult] = useState<AgentRunResponse | null>(null);
+  const [agentLiveLogs, setAgentLiveLogs] = useState<AgentLogEntry[]>([]);
+  const [agentRunStatus, setAgentRunStatus] = useState<"idle" | "running" | "completed" | "failed">("idle");
+  const [activeRunId, setActiveRunId] = useState<string | null>(null);
+  const [agentHistory, setAgentHistory] = useState<AgentHistoryItem[]>([]);
+  const [loadingAgentHistory, setLoadingAgentHistory] = useState(false);
+  const [expandedRunId, setExpandedRunId] = useState<string | null>(null);
+
+  const currentAgentLogs: AgentLogEntry[] = runningAgent ? agentLiveLogs : (agentResult?.logs || []);
+  const latestRunFormattedCases: FormattedCaseOutput[] =
+    (agentResult?.formatted_cases && agentResult.formatted_cases.length > 0)
+      ? agentResult.formatted_cases
+      : (agentResult ? fallbackFormattedFromAgentState({ ...agentResult, run_id: agentResult.run_id, last_message: agentResult.last_message }) : []);
 
   const handleDocSearch = async () => {
     if (!docSearchQuery.trim()) return;
@@ -465,6 +708,18 @@ function CaseDetailView({ caseData, onBack, onDelete, onRefresh }: CaseDetailPro
     }
   };
 
+  const loadAgentHistory = async () => {
+    setLoadingAgentHistory(true);
+    try {
+      const rows = await getAgentHistory(caseData.case_id, DEFAULT_USER_ID);
+      setAgentHistory(rows);
+    } catch (e) {
+      console.error("Failed to load agent history", e);
+    } finally {
+      setLoadingAgentHistory(false);
+    }
+  };
+
   const loadChatHistory = async () => {
     try {
       const res = await getChatHistory(caseData.case_id);
@@ -493,6 +748,7 @@ function CaseDetailView({ caseData, onBack, onDelete, onRefresh }: CaseDetailPro
     loadChatHistory();
     loadSummary();
     loadResearchHistory();
+    loadAgentHistory();
   }, [caseData.case_id]);
 
   useEffect(() => {
@@ -522,17 +778,26 @@ function CaseDetailView({ caseData, onBack, onDelete, onRefresh }: CaseDetailPro
 
   const handleResearch = async () => {
     setResearching(true);
+    setResearchError(null);
     try {
       const res = await conductResearch({
         client_name: caseData.client_name,
         case_title: `${caseData.client_name} vs ${caseData.opposing_party || 'Unknown'}`,
-        description: caseData.legal_issue_summary || caseData.raw_description || "Legal case research",
+        description:
+          caseData.legal_issue_summary ||
+          caseData.raw_description ||
+          `${caseData.client_name} ${caseData.opposing_party || ""} ${caseData.case_type || ""} legal dispute India`,
       });
       if (res.success && res.research) {
         setResearchResult(res.research);
+      } else {
+        setResearchResult(null);
+        setResearchError(res.message || "No relevant cases found. Please refine the query and try again.");
       }
     } catch (err) {
       console.error("Research failed", err);
+      setResearchResult(null);
+      setResearchError("Research request failed. Please try again.");
     } finally {
       setResearching(false);
     }
@@ -572,6 +837,87 @@ function CaseDetailView({ caseData, onBack, onDelete, onRefresh }: CaseDetailPro
     }
   };
 
+  const handleRunAgent = async () => {
+    setRunningAgent(true);
+    setAgentError("");
+    setAgentResult(null);
+    setAgentLiveLogs([]);
+    setAgentRunStatus("running");
+    setActiveRunId(null);
+    try {
+      const started = await runAgentAsync(caseData.case_id, DEFAULT_USER_ID, agentInstruction.trim() || undefined);
+      setActiveRunId(started.run_id);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to run agent";
+      setAgentError(message);
+      setRunningAgent(false);
+      setAgentRunStatus("failed");
+    }
+  };
+
+  useEffect(() => {
+    if (!runningAgent || !activeRunId) {
+      return;
+    }
+
+    let cancelled = false;
+    const poll = async () => {
+      try {
+        const status: AgentRunStatusResponse = await getAgentRunStatus(activeRunId, DEFAULT_USER_ID);
+        if (cancelled) return;
+
+        setAgentRunStatus(status.status);
+        setAgentLiveLogs(status.logs || []);
+
+        if (status.status === "completed") {
+          setAgentResult(status);
+          setRunningAgent(false);
+          setActiveRunId(null);
+          await loadAgentHistory();
+          return;
+        }
+
+        if (status.status === "failed") {
+          setAgentResult(status);
+          setRunningAgent(false);
+          setActiveRunId(null);
+          setAgentError(status.stop_reason ? `Agent failed: ${status.stop_reason}` : "Agent run failed");
+          await loadAgentHistory();
+        }
+      } catch (err) {
+        if (cancelled) return;
+        const message = err instanceof Error ? err.message : "Failed to poll agent status";
+        setAgentError(message);
+        setRunningAgent(false);
+        setActiveRunId(null);
+        setAgentRunStatus("failed");
+      }
+    };
+
+    poll();
+    const timer = setInterval(poll, 1500);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [runningAgent, activeRunId, caseData.case_id]);
+
+  const handleConnectGoogle = async () => {
+    setAgentError("");
+    try {
+      const apiRoot = (import.meta.env.VITE_API_URL || "http://localhost:8000/legal").replace(/\/legal\/?$/, "");
+      const redirectUri = `${apiRoot}/legal/agent/auth/google/callback`;
+      const res = await startGoogleAuth(redirectUri, DEFAULT_USER_ID);
+      if (!res.auth_url) {
+        throw new Error("No Google auth URL returned");
+      }
+      window.location.href = res.auth_url;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Could not start Google authorization";
+      setAgentError(message);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -600,6 +946,12 @@ function CaseDetailView({ caseData, onBack, onDelete, onRefresh }: CaseDetailPro
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${showActs ? "bg-[#5d4037] text-white" : "bg-[#e5ddd0] text-[#666] hover:bg-[#d4c4a8]"}`}
           >
             📜 Acts
+          </button>
+          <button
+            onClick={() => { setShowAgent(!showAgent); setShowResearch(false); setShowMultiSource(false); setShowEvidence(false); setShowActs(false); }}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${showAgent ? "bg-[#0f766e] text-white" : "bg-[#e5ddd0] text-[#666] hover:bg-[#d4c4a8]"}`}
+          >
+            🤖 Agent
           </button>
           <button
             onClick={() => { setShowEvidence(!showEvidence); setShowResearch(false); setShowMultiSource(false); setShowActs(false); }}
@@ -869,6 +1221,177 @@ function CaseDetailView({ caseData, onBack, onDelete, onRefresh }: CaseDetailPro
                 onClose={() => setShowActs(false)}
               />
             </div>
+          ) : showAgent ? (
+            <div className="p-4 h-full overflow-y-auto space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium text-[#1a1a1a]">NyayaZephyr Agent</h3>
+                <div className="flex gap-2">
+                  <button
+                    onClick={loadAgentHistory}
+                    className="px-3 py-1.5 rounded-lg bg-[#e5ddd0] hover:bg-[#d4c4a8] text-[#1a1a1a] text-sm"
+                  >
+                    Refresh History
+                  </button>
+                  <button
+                    onClick={handleConnectGoogle}
+                    className="px-3 py-1.5 rounded-lg bg-[#1d4ed8] hover:bg-[#1e40af] text-white text-sm"
+                  >
+                    Connect Google
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-[#f5f1e8] border border-[#d4b896] rounded-lg p-4">
+                <label className="block text-sm text-[#666] mb-2">Optional Instructions for Agent</label>
+                <textarea
+                  value={agentInstruction}
+                  onChange={(e) => setAgentInstruction(e.target.value)}
+                  rows={4}
+                  placeholder="e.g., Focus on anticipatory bail precedents and draft a concise action report for tomorrow's hearing."
+                  className="w-full px-3 py-2 rounded-lg border border-[#d4b896] bg-white focus:outline-none focus:ring-2 focus:ring-[#0f766e]"
+                />
+                <div className="mt-3 flex items-center gap-3">
+                  <button
+                    onClick={handleRunAgent}
+                    disabled={runningAgent}
+                    className="px-4 py-2 rounded-lg bg-[#0f766e] text-white hover:bg-[#115e59] disabled:opacity-50"
+                  >
+                    {runningAgent ? "Running Agent..." : "Run Agent"}
+                  </button>
+                  <span className="text-xs text-[#666]">
+                    {runningAgent ? `Live status: ${agentRunStatus}${activeRunId ? ` (${activeRunId.slice(0, 8)}...)` : ""}` : "Agent runs on current case file + optional instructions."}
+                  </span>
+                </div>
+
+                <div className="mt-3 border border-[#d4b896] rounded-lg bg-white p-3">
+                  <p className="text-sm font-medium text-[#1a1a1a] mb-2">Agent Logs</p>
+                  {runningAgent && currentAgentLogs.length === 0 ? (
+                    <p className="text-xs text-[#666]">Run in progress... waiting for first node logs.</p>
+                  ) : currentAgentLogs.length === 0 ? (
+                    <p className="text-xs text-[#666]">No logs yet. Run the agent to see execution steps.</p>
+                  ) : (
+                    <div className="max-h-52 overflow-y-auto space-y-2">
+                      {currentAgentLogs.map((log, idx) => (
+                        <div key={idx} className="text-xs border-b border-[#ece6d9] pb-2 last:border-b-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="px-2 py-0.5 rounded bg-[#e5ddd0] text-[#5d4037] uppercase">{log.stage || "stage"}</span>
+                            <span className="px-2 py-0.5 rounded bg-[#eef2ff] text-[#3730a3] uppercase">{log.level || "info"}</span>
+                            <span className="text-[#666]">{log.ts ? new Date(log.ts).toLocaleTimeString() : ""}</span>
+                          </div>
+                          <p className="text-[#1a1a1a] whitespace-pre-wrap">{log.message || ""}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {agentError && (
+                <div className="p-3 rounded-lg bg-red-100 border border-red-300 text-red-700 text-sm">
+                  {agentError}
+                </div>
+              )}
+
+              {agentResult && (
+                <div className="bg-white border border-[#d4b896] rounded-lg p-4 space-y-2">
+                  <h4 className="font-medium text-[#1a1a1a]">Latest Run Summary</h4>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div><span className="text-[#666]">Run ID:</span> <span className="text-[#1a1a1a]">{agentResult.run_id}</span></div>
+                    <div><span className="text-[#666]">Research Results:</span> <span className="text-[#1a1a1a]">{agentResult.research_results_count}</span></div>
+                    <div><span className="text-[#666]">Verified:</span> <span className={`${agentResult.verification_passed ? "text-green-700" : "text-amber-700"}`}>{agentResult.verification_passed ? "Yes" : "No"}</span></div>
+                    <div><span className="text-[#666]">Email Sent:</span> <span className={`${agentResult.email_sent ? "text-green-700" : "text-amber-700"}`}>{agentResult.email_sent ? "Yes" : "No"}</span></div>
+                    <div><span className="text-[#666]">Steps:</span> <span className="text-[#1a1a1a]">{agentResult.step_count}</span></div>
+                    <div><span className="text-[#666]">Tool Hops:</span> <span className="text-[#1a1a1a]">{agentResult.tool_hops}</span></div>
+                    <div><span className="text-[#666]">Duration:</span> <span className="text-[#1a1a1a]">{Math.max(0, Math.round(agentResult.duration_ms / 1000))}s</span></div>
+                    <div><span className="text-[#666]">Stop Reason:</span> <span className="text-[#1a1a1a]">{agentResult.stop_reason || "completed"}</span></div>
+                  </div>
+                  {agentResult.last_message && (
+                    <p className="text-sm text-[#1a1a1a] bg-[#f8f6ef] p-3 rounded-lg">{agentResult.last_message}</p>
+                  )}
+                  {!agentResult.email_sent && (
+                    <div className="p-2 rounded-md bg-amber-100 border border-amber-300 text-amber-800 text-sm">
+                      Agent completed, but email was skipped or failed. Use Connect Google and rerun to enable delivery.
+                    </div>
+                  )}
+
+                  <div className="mt-3">
+                    <h5 className="text-sm font-medium text-[#1a1a1a] mb-2">Cases</h5>
+                    <ExpandableCaseOutputs
+                      items={latestRunFormattedCases}
+                      emptyText="No structured case output available for this run."
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="bg-white border border-[#d4b896] rounded-lg p-4">
+                <h4 className="font-medium text-[#1a1a1a] mb-3">Agent Report History</h4>
+                {loadingAgentHistory ? (
+                  <p className="text-sm text-[#666]">Loading report history...</p>
+                ) : agentHistory.length === 0 ? (
+                  <p className="text-sm text-[#666]">No agent runs yet for this case.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {agentHistory.map((row) => {
+                      const isOpen = expandedRunId === row.run_id;
+                      const state = row.state || {};
+                      return (
+                        <div key={row.run_id} className="border border-[#e5ddd0] rounded-lg p-3">
+                          <div className="flex items-center justify-between gap-2">
+                            <div>
+                              <p className="text-sm font-medium text-[#1a1a1a]">Run {row.run_id.slice(0, 8)}...</p>
+                              <p className="text-xs text-[#666]">{new Date(row.created_at).toLocaleString()}</p>
+                            </div>
+                            <button
+                              onClick={() => setExpandedRunId(isOpen ? null : row.run_id)}
+                              className="text-xs px-2 py-1 bg-[#e5ddd0] rounded hover:bg-[#d4c4a8]"
+                            >
+                              {isOpen ? "Hide" : "View"}
+                            </button>
+                          </div>
+
+                          {isOpen && (
+                            <div className="mt-3 space-y-2 text-sm">
+                              <p><span className="text-[#666]">Verification:</span> {state.verification_passed ? "Passed" : "Not Passed"}</p>
+                              <p><span className="text-[#666]">Email:</span> {state.email_sent ? "Sent" : "Not Sent"}</p>
+                              <p><span className="text-[#666]">Research Count:</span> {(state.research_results || []).length}</p>
+
+                              <div className="mt-2">
+                                <p className="text-sm font-medium text-[#1a1a1a] mb-2">Cases</p>
+                                <ExpandableCaseOutputs
+                                  items={Array.isArray(state.formatted_cases) && state.formatted_cases.length > 0 ? state.formatted_cases : fallbackFormattedFromAgentState({ ...state, run_id: row.run_id })}
+                                  emptyText="No structured case output available for this run."
+                                />
+                              </div>
+
+                              {Array.isArray(state.execution_logs) && state.execution_logs.length > 0 && (
+                                <div className="bg-[#f8f6ef] rounded p-2 max-h-44 overflow-y-auto">
+                                  {state.execution_logs.map((log: AgentLogEntry, idx: number) => (
+                                    <div key={idx} className="mb-2 pb-2 border-b border-[#ece6d9] last:border-b-0">
+                                      <p className="text-xs text-[#666]">[{log.stage || "stage"}] {log.message || ""}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              {state.messages && Array.isArray(state.messages) && state.messages.length > 0 && (
+                                <div className="bg-[#f8f6ef] rounded p-2 max-h-56 overflow-y-auto">
+                                  {state.messages.map((m: any, idx: number) => (
+                                    <div key={idx} className="mb-2 pb-2 border-b border-[#ece6d9] last:border-b-0">
+                                      <p className="text-xs text-[#666] mb-1">{m.type || "Message"}</p>
+                                      <p className="text-sm text-[#1a1a1a] whitespace-pre-wrap">{typeof m.content === "string" ? m.content : JSON.stringify(m.content)}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
           ) : showEvidence ? (
             // Evidence Panel
             <div className="p-4 h-full overflow-y-auto">
@@ -913,35 +1436,10 @@ function CaseDetailView({ caseData, onBack, onDelete, onRefresh }: CaseDetailPro
                   {researchResult.relevant_cases && researchResult.relevant_cases.length > 0 && (
                     <div>
                       <h4 className="font-medium text-[#1a1a1a] mb-3">📚 Relevant Cases ({researchResult.relevant_cases.length} found)</h4>
-                      <div className="space-y-4">
-                        {researchResult.relevant_cases.map((caseInfo, idx) => (
-                          <div key={idx} className="bg-white p-4 rounded-lg border border-[#d4b896] shadow-sm">
-                            <div className="flex justify-between items-start mb-2">
-                              <a href={caseInfo.url} target="_blank" rel="noopener noreferrer" className="text-[#f97316] font-semibold hover:underline flex-1">
-                                {caseInfo.title}
-                              </a>
-                              {caseInfo.court && (
-                                <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
-                                  {caseInfo.court}
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex gap-4 text-xs text-[#666] mb-2">
-                              {caseInfo.date && <span>📅 {caseInfo.date}</span>}
-                              {caseInfo.case_type && <span>📋 {caseInfo.case_type}</span>}
-                              {caseInfo.verdict && caseInfo.verdict !== "Not determined" && (
-                                <span className={`font-medium ${caseInfo.verdict.includes("Allowed") || caseInfo.verdict.includes("Acquitted") ? "text-green-600" : caseInfo.verdict.includes("Dismissed") || caseInfo.verdict.includes("Convicted") ? "text-red-600" : "text-gray-600"}`}>
-                                  ⚖️ {caseInfo.verdict}
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-sm text-[#1a1a1a] leading-relaxed">{caseInfo.snippet}</p>
-                            <a href={caseInfo.url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline mt-2 inline-block">
-                              🔗 View Full Case on Indian Kanoon →
-                            </a>
-                          </div>
-                        ))}
-                      </div>
+                      <ExpandableCaseOutputs
+                        items={researchResult.relevant_cases.map((caseInfo) => caseInfo.formatted_output || fallbackFormattedFromResearchCase(caseInfo))}
+                        emptyText="No formatted case output available."
+                      />
                     </div>
                   )}
 
@@ -973,6 +1471,9 @@ function CaseDetailView({ caseData, onBack, onDelete, onRefresh }: CaseDetailPro
                     >
                       Start Research
                     </button>
+                    {researchError && (
+                      <p className="mt-3 text-sm text-red-600">{researchError}</p>
+                    )}
                   </div>
                 </div>
               )}
